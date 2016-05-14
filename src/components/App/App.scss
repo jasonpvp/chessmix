@@ -1,0 +1,9 @@
+@import "../BaseStyles/SuitMixins.scss";
+
+@include namespace('seed') {
+  @include component('App') {
+    @include descendant('title') {
+      color: blue;
+    }
+  }
+}

@@ -1,0 +1,29 @@
+@mixin namespace($namespace) {
+  .#{$namespace} {
+    @content;
+  }
+}
+
+@mixin component($component) {
+  &-#{$component} {
+    @content;
+  }
+}
+
+@mixin descendant($element) {
+  &-#{$element} {
+    @content;
+  }
+}
+
+@mixin modifier($modifier) {
+  &--#{$modifier} {
+    @content;
+  }
+}
+
+@mixin state($state) {
+  &.is-#{$state} {
+    @content;
+  }
+}
