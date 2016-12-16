@@ -1,9 +1,16 @@
 @import "../BaseStyles/SuitMixins.scss";
 
-@include namespace('seed') {
+@include namespace('chesster') {
   @include component('App') {
+    @include descendant('header') {
+      padding: 20px;
+      padding-left: 50px;
+    }
     @include descendant('title') {
       color: blue;
+      font-size: 18px;
+    }
+    @include descendant('lastMove') {
     }
   }
 }
