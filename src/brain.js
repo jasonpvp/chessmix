@@ -1,9 +1,10 @@
 import synaptic from 'synaptic'
 
 export function ChessBrain () {
-  var network = new synaptic.Architect.Perceptron(272, 64, 32, 8, 1)
+  var network = new synaptic.Architect.Perceptron(272, 64, 32, 8, 3, 1)
 
   return {
+    network: network,
     getBestMove: function (boardAscii, moves) {
       const binBoard = asciiBoardToBinary(boardAscii)
 
@@ -16,7 +17,7 @@ export function ChessBrain () {
         }
       }).sort((a, b) => { (a.score < b.score) ? 1 : (a.score > b.score) ? -1 : 0})
 
-      console.log('scored: %o', scoredMoves)
+      //console.log('scored: %o', scoredMoves)
       return scoredMoves[0]
     }
   }

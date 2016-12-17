@@ -7,6 +7,7 @@ import { actions } from '../../state/app_actions'
 import Chessdiagram from 'react-chessdiagram'
 import Chess from 'chess.js'
 import { ChessBrain, boardToBinary, moveToBinary } from '../../brain'
+import { Network } from '../Network'
 require('./App.scss')
 
 const lightSquareColor = '#2492FF'
@@ -26,6 +27,7 @@ export class App extends React.Component {
       msg: '',
       autoPlay: false
     }
+    window.brain = this.brain
   }
 
   getChildContext () {
@@ -35,7 +37,6 @@ export class App extends React.Component {
   }
 
   onMovePiece = (piece, fromSquare, toSquare, promotion = '') => {
-    console.log(arguments)
     //console.log(this.board.ascii())
     //console.log(boardToBinary(this.board))
     const game = this
@@ -54,12 +55,12 @@ export class App extends React.Component {
 
     this.board.move(move, {sloppy: true})
     const nextMove = this.brain.getBestMove(this.board.ascii(), this.board.moves({verbose: true}))
-    console.log('next: %o', nextMove)
+    console.log(nextMove.move.piece + nextMove.move.from + nextMove.move.to + ' score: ' + nextMove.score)
 
     if (this.board.fen() === this.state.fen) {
-      this.setState({lastMove: 'Invalid move'})
+      this.setState({lastMove: 'Invalid move', msg: ''})
     } else {
-      this.setState({fen: this.board.fen(), lastMove: `${piece}${fromSquare}${toSquare}`})
+      this.setState({fen: this.board.fen(), lastMove: `${piece}${fromSquare}${toSquare}`, msg: ''})
       if (this.state.autoPlay) {
         setTimeout(function () {
           if (game.board.in_checkmate()) {
@@ -69,7 +70,7 @@ export class App extends React.Component {
             game.setState({msg: 'Check!'})
           }
           game.onMovePiece(nextMove.move.piece, nextMove.move.from, nextMove.move.to, nextMove.move.promotion)
-        }, 1000)
+        }, 0)
       }
     }
   }
@@ -93,6 +94,7 @@ export class App extends React.Component {
     const headerClasses = this.classNames({descendant: 'header'})
     const titleClasses = this.classNames({descendant: 'title'})
     const lastMoveClasses = this.classNames({descendant: 'lastMove'})
+    const networkClasses = this.classNames({descendant: 'network'})
 
     const chessBoardProps = {
       flip: flip,
@@ -112,6 +114,9 @@ export class App extends React.Component {
           <button onClick={this.toggleAutoPlay}>{autoPlay ? 'Disable' : 'Enable'} AutoPlay</button>
         </div>
         <Chessdiagram {...chessBoardProps} />
+        <div className={networkClasses}>
+          <Network networkJson={this.brain.network.toJSON()} size={15} />
+        </div>
       </div>
     )
   }

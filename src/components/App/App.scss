@@ -10,7 +10,10 @@
       color: blue;
       font-size: 18px;
     }
-    @include descendant('lastMove') {
+    @include descendant('network') {
+      position: absolute;
+      top: 100px;
+      left: 700px;
     }
   }
 }
