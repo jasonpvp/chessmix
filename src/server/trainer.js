@@ -7,16 +7,21 @@ const engine = stockfish()
 var position = "startpos"
 var got_uci
 var started_thinking
+var startTime = (new Date()).getTime()
+var duration
 
 // TODO: add more UCI command options: http://wbec-ridderkerk.nl/html/UCIProtocol.html
 const optionDefinitions = [
   {name: 'help', alias: 'h', type: Boolean},
   {name: 'fen', alias: 'f', type: String},
   {name: 'moves', alias: 'm', type: String},
-  {name: 'movetime', alias: 't', type: Number, defaultOption: 10}
+  {name: 'movetime', alias: 't', type: Number}
 ]
 
 const options = commandLineArgs(optionDefinitions)
+options.movetime = options.movetime || 3
+
+console.log('options: ' + JSON.stringify(options))
 
 if (options.help) {
   printHelp()
@@ -68,13 +73,17 @@ function processMessage (line) {
     started_thinking = true
     setTimeout(function () {
       send("stop")
+      duration = ((new Date()).getTime() - startTime) / 1000
     }, 1000 * options.movetime)
   } else if (line.indexOf("bestmove") > -1) {
     match = line.match(/bestmove\s+(\S+)/)
-    if (match) {
-      console.log("Best move: " + match[1])
-      process.exit()
+    var output = {
+      bestMove: match ? match[1] : 'none',
+      duration: duration,
+      options: options
     }
+    console.log(JSON.stringify(output))
+    process.exit()
   }
 }
 
