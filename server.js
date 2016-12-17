@@ -8,17 +8,25 @@ var trainer = path.join(__dirname, 'src', 'server', 'trainer.js')
 function puts(error, stdout, stderr) { sys.puts(stdout) }
 exec("ls -la", puts);
 
-app.get('/getBestMove', function (req, res) {
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*")
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+  next()
+})
+
+app.get('/getTrainerMove', function (req, res) {
   var cmd = ['node ' + trainer]
-  if (req.query.fen) cmd.push(' -f ' + req.query.fen)
-  if (req.query.moves) cmd.push(' -m "' + req.query.moves + '"')
-  if (req.query.movetime) cmd.push(' -t ' + req.query.movetime)
+  if (req.query.fen) cmd.push.apply(cmd, ['-f', req.query.fen])
+  if (req.query.moves) cmd.push.apply(cmd, ['-m', '"' + req.query.moves + '"'])
+  if (req.query.movetime) cmd.push.apply(cmd, ['-t', req.query.movetime])
+
   console.log('query: ' + JSON.stringify(req.query))
   console.log('cmd: ' + cmd.join(' '))
-  exec(cmd, (err, stdout, stderr) => {
+  exec(cmd.join(' '), (err, stdout, stderr) => {
     var lines = stdout.split(/\n/)
-    var result = lines[lines.length - 2]
     console.log(lines)
+    var result = lines[0]
+    console.log('send result: ' + result)
     res.send(result)
   })
 })

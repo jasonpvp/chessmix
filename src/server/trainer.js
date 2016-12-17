@@ -20,7 +20,7 @@ const optionDefinitions = [
 ]
 
 const options = commandLineArgs(optionDefinitions)
-options.movetime = options.movetime || 3
+options.movetime = options.movetime || 1
 
 logIfVerbose('options: ' + JSON.stringify(options))
 

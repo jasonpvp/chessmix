@@ -14,6 +14,7 @@ const lightSquareColor = '#2492FF'
 const darkSquareColor = '#005EBB'
 const flip = false
 const squareSize = 70
+const moves = []
 
 export class App extends React.Component {
   constructor (props) {
@@ -37,11 +38,9 @@ export class App extends React.Component {
   }
 
   onMovePiece = (piece, fromSquare, toSquare, promotion = '') => {
-    //console.log(this.board.ascii())
-    //console.log(boardToBinary(this.board))
     const game = this
     let move = fromSquare + toSquare
-    //console.log('move %s %o', move, moveToBinary(move))
+    console.log('Move) piece: %s, from: %s to: %s, promotion: %s', piece, fromSquare, toSquare, promotion)
     const type = piece.toLowerCase()
 
     if (type === 'p' && ([1,8]).includes(parseInt(toSquare[1]))) {
@@ -54,12 +53,11 @@ export class App extends React.Component {
     }
 
     this.board.move(move, {sloppy: true})
-    const nextMove = this.brain.getBestMove(this.board.ascii(), this.board.moves({verbose: true}))
-    console.log(nextMove.move.piece + nextMove.move.from + nextMove.move.to + ' score: ' + nextMove.score)
 
     if (this.board.fen() === this.state.fen) {
       this.setState({lastMove: 'Invalid move', msg: ''})
     } else {
+      moves.push(move)
       this.setState({fen: this.board.fen(), lastMove: `${piece}${fromSquare}${toSquare}`, msg: ''})
       if (this.state.autoPlay) {
         setTimeout(function () {
@@ -69,7 +67,30 @@ export class App extends React.Component {
           } else if (game.board.in_check()) {
             game.setState({msg: 'Check!'})
           }
-          game.onMovePiece(nextMove.move.piece, nextMove.move.from, nextMove.move.to, nextMove.move.promotion)
+          if (game.board.turn() === 'b') {
+            console.log('trainers turn')
+            fetch('http://localhost:3000/getTrainerMove?moves=' + moves.join(' ')).then(response => {
+              return response.json()
+            }).then(data => {
+              console.log(`trainer response: ${JSON.stringify(data)}`)
+              const move = data.bestMove
+              const from = move.slice(0, 2)
+              const to = move.slice(2, 4)
+              const promotion = move.slice(4, 5)
+              const nextMove = {
+                piece: game.board.get(from).type,
+                from,
+                to,
+                promotion
+              }
+              game.onMovePiece(nextMove.piece, nextMove.from, nextMove.to, nextMove.promotion)
+            })
+          } else {
+            console.log('Chessters turn')
+            const nextMove = game.brain.getBestMove(game.board.ascii(), game.board.moves({verbose: true}))
+            console.log(nextMove.move.piece + nextMove.move.from + nextMove.move.to + ' score: ' + nextMove.score)
+            game.onMovePiece(nextMove.move.piece, nextMove.move.from, nextMove.move.to, nextMove.move.promotion)
+          }
         }, 0)
       }
     }
