@@ -7,7 +7,7 @@ export function ChessBrain () {
     getBestMove: function (boardAscii, moves) {
       const binBoard = asciiBoardToBinary(boardAscii)
 
-      const scoredMoves = moves.map(move => {
+      const scoredMoves = shuffleArray(moves).map(move => {
         const output = scoreMove(network, binBoard, verboseMoveToBinary(move))
         return {
           move,
@@ -85,4 +85,14 @@ const pieceValues = {
 
 function pieceToValue (p) {
   return pieceValues[p]
+}
+
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
 }

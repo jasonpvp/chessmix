@@ -22,7 +22,9 @@ export class App extends React.Component {
     this.brain = new ChessBrain()
     this.state = {
       fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-      lastMove: null
+      lastMove: null,
+      msg: '',
+      autoPlay: false
     }
   }
 
@@ -58,16 +60,22 @@ export class App extends React.Component {
       this.setState({lastMove: 'Invalid move'})
     } else {
       this.setState({fen: this.board.fen(), lastMove: `${piece}${fromSquare}${toSquare}`})
-      setTimeout(function () {
-        if (game.board.in_checkmate()) {
-          alert('Check mate!')
-          return
-        } else if (game.board.in_check()) {
-          alert('Check!')
-        }
-        game.onMovePiece(nextMove.move.piece, nextMove.move.from, nextMove.move.to, nextMove.move.promotion)
-      }, 1000)
+      if (this.state.autoPlay) {
+        setTimeout(function () {
+          if (game.board.in_checkmate()) {
+            game.setState({msg: 'Check mate!'})
+            return
+          } else if (game.board.in_check()) {
+            game.setState({msg: 'Check!'})
+          }
+          game.onMovePiece(nextMove.move.piece, nextMove.move.from, nextMove.move.to, nextMove.move.promotion)
+        }, 1000)
+      }
     }
+  }
+
+  toggleAutoPlay = () => {
+    this.setState({autoPlay: !this.state.autoPlay})
   }
 
   classNames (options) {
@@ -80,7 +88,7 @@ export class App extends React.Component {
 
   render () {
     const { example } = this.props
-    const { lastMove, fen } = this.state
+    const { lastMove, fen, msg, autoPlay } = this.state
     const appClasses = this.classNames()
     const headerClasses = this.classNames({descendant: 'header'})
     const titleClasses = this.classNames({descendant: 'title'})
@@ -100,7 +108,8 @@ export class App extends React.Component {
       <div className={appClasses}>
         <div className={headerClasses}>
           <div className={titleClasses}>Chesster</div>
-          <div className={lastMoveClasses}>{lastMoveMessage}</div>
+          <div className={lastMoveClasses}>{lastMoveMessage} {msg}</div>
+          <button onClick={this.toggleAutoPlay}>{autoPlay ? 'Disable' : 'Enable'} AutoPlay</button>
         </div>
         <Chessdiagram {...chessBoardProps} />
       </div>
