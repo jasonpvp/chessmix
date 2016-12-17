@@ -1,11 +1,37 @@
 import synaptic from 'synaptic'
 
-function brain () {
-  var nn = new synaptic.Architect.Perceptron(2048, 64, 32, 8)
+export function ChessBrain () {
+  var network = new synaptic.Architect.Perceptron(272, 64, 32, 8, 1)
+
+  return {
+    getBestMove: function (boardAscii, moves) {
+      const binBoard = asciiBoardToBinary(boardAscii)
+
+      const scoredMoves = moves.map(move => {
+        const output = scoreMove(network, binBoard, verboseMoveToBinary(move))
+        return {
+          move,
+          output,
+          score: output[0]
+        }
+      }).sort((a, b) => { (a.score < b.score) ? 1 : (a.score > b.score) ? -1 : 0})
+
+      console.log('scored: %o', scoredMoves)
+      return scoredMoves[0]
+    }
+  }
 }
 
-export function boardToBinary (chess) {
-  const ascii = chess.ascii()
+function scoreMove (network, binBoard, binMove) {
+  const input = ([]).concat(binBoard).concat(binMove)
+  return network.activate(input)
+}
+
+function outputToScore (output) {
+  return parseInt(output.join(''), 2)
+}
+
+export function asciiBoardToBinary (ascii) {
   const rows = ascii.split(/\n/)
   var bin = rows.reduce((bin, row) => {
     if (row.indexOf('-') > -1 || row.indexOf('h') > -1) return bin
@@ -14,6 +40,10 @@ export function boardToBinary (chess) {
     return bin
   }, [])
   return bin
+}
+
+function verboseMoveToBinary (move) {
+  return moveToBinary(move.from + move.to)
 }
 
 export function moveToBinary (move) {

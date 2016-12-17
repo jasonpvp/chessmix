@@ -6,7 +6,7 @@ import { connect } from 'react-redux'
 import { actions } from '../../state/app_actions'
 import Chessdiagram from 'react-chessdiagram'
 import Chess from 'chess.js'
-import { boardToBinary, moveToBinary } from '../../brain'
+import { ChessBrain, boardToBinary, moveToBinary } from '../../brain'
 require('./App.scss')
 
 const lightSquareColor = '#2492FF'
@@ -18,7 +18,8 @@ export class App extends React.Component {
   constructor (props) {
     super(props)
     this.wrappedActions = actions(props.dispatch)
-    this.chess = new Chess()
+    this.board = new Chess()
+    this.brain = new ChessBrain()
     this.state = {
       fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
       lastMove: null
@@ -31,15 +32,17 @@ export class App extends React.Component {
     }
   }
 
-  onMovePiece = (piece, fromSquare, toSquare) => {
-console.log(this.chess.ascii())
-console.log(boardToBinary(this.chess))
+  onMovePiece = (piece, fromSquare, toSquare, promotion = '') => {
+    console.log(arguments)
+    //console.log(this.board.ascii())
+    //console.log(boardToBinary(this.board))
     const game = this
     let move = fromSquare + toSquare
-console.log('move %s %o', move, moveToBinary(move))
+    //console.log('move %s %o', move, moveToBinary(move))
     const type = piece.toLowerCase()
+
     if (type === 'p' && ([1,8]).includes(parseInt(toSquare[1]))) {
-      let newType = ''
+      let newType = promotion
       while (!(['q', 'r', 'b', 'n']).includes(newType.toLowerCase())) {
         newType = prompt('New piece (q, b, r, n)')
       }
@@ -47,18 +50,23 @@ console.log('move %s %o', move, moveToBinary(move))
       move += newPiece
     }
 
-    this.chess.move(move, {sloppy: true})
-    if (this.chess.fen() === this.state.fen) {
+    this.board.move(move, {sloppy: true})
+    const nextMove = this.brain.getBestMove(this.board.ascii(), this.board.moves({verbose: true}))
+    console.log('next: %o', nextMove)
+
+    if (this.board.fen() === this.state.fen) {
       this.setState({lastMove: 'Invalid move'})
     } else {
-      this.setState({fen: this.chess.fen(), lastMove: `${piece}${fromSquare}${toSquare}`})
+      this.setState({fen: this.board.fen(), lastMove: `${piece}${fromSquare}${toSquare}`})
       setTimeout(function () {
-        if (game.chess.in_checkmate()) {
+        if (game.board.in_checkmate()) {
           alert('Check mate!')
-        } else if (game.chess.in_check()) {
+          return
+        } else if (game.board.in_check()) {
           alert('Check!')
         }
-      }, 0)
+        game.onMovePiece(nextMove.move.piece, nextMove.move.from, nextMove.move.to, nextMove.move.promotion)
+      }, 1000)
     }
   }
 
