@@ -56,6 +56,7 @@
     "redux": "^3.0.4",
     "redux-actions": "^0.10.0",
     "redux-promises": "^1.0.0",
-    "suitcss-classnames": "^1.1.0"
+    "suitcss-classnames": "^1.1.0",
+    "synaptic": "^1.0.8"
   }
 }

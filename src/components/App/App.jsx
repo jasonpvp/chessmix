@@ -6,6 +6,7 @@ import { connect } from 'react-redux'
 import { actions } from '../../state/app_actions'
 import Chessdiagram from 'react-chessdiagram'
 import Chess from 'chess.js'
+import { boardToBinary, moveToBinary } from '../../brain'
 require('./App.scss')
 
 const lightSquareColor = '#2492FF'
@@ -31,8 +32,11 @@ export class App extends React.Component {
   }
 
   onMovePiece = (piece, fromSquare, toSquare) => {
+console.log(this.chess.ascii())
+console.log(boardToBinary(this.chess))
     const game = this
     let move = fromSquare + toSquare
+console.log('move %s %o', move, moveToBinary(move))
     const type = piece.toLowerCase()
     if (type === 'p' && ([1,8]).includes(parseInt(toSquare[1]))) {
       let newType = ''
