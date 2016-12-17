@@ -1,29 +1,31 @@
 import synaptic from 'synaptic'
+import Chess from 'chess.js'
 
 export function ChessBrain () {
-  var network = new synaptic.Architect.Perceptron(272, 64, 32, 16, 8, 4, 2, 1)
+  var network = new synaptic.Architect.Perceptron(256, 128, 64, 32, 16, 8, 4, 2, 1)
   var learningRate = 0.3
   var lastMove
+  var scoreBoard = new Chess()
 
   return {
     network: network,
-    getBestMove: function (boardAscii, moves) {
-      const binBoard = asciiBoardToBinary(boardAscii)
+    getBestMove: function (board, moves) {
+      const baseScore = scoreMove(network, asciiBoardToBinary(board.ascii()))[0]
+      const boardFen = board.fen()
 
       const scoredMoves = shuffleArray(moves).map(move => {
-        const binMove = verboseMoveToBinary(move)
-//        const binMove = [0,0,0,0,0,0,0,0,0,0]
-        const output = scoreMove(network, binBoard, binMove)
-//        network.propagate(0.1, [Math.random()])
+        scoreBoard.load(board.fen())
+        scoreBoard.move(move)
+        const binBoard = asciiBoardToBinary(scoreBoard.ascii())
+        const output = scoreMove(network, binBoard)
 
         return {
           move,
           output,
-          inputs: {
-            binBoard,
-            binMove
-          },
-          score: output[0]
+          start: boardFen,
+          end: scoreBoard.fen(),
+          binBoard: binBoard,
+          score: output.reduce((s, v) => s + v, 0) / 4
         }
       }).sort((a, b) => { (a.score < b.score) ? 1 : (a.score > b.score) ? -1 : 0})
 
@@ -34,17 +36,16 @@ export function ChessBrain () {
     train: function (targetScore) {
       if (!lastMove) return
       // assume the score is in -40..40
-      const brainScore = 1//(targetScore + 40) / 80
+      const brainScore = (targetScore + 40) / 80
       console.log('train with score: %s %s', targetScore, brainScore)
-      scoreMove(network, lastMove.binBoard, lastMove.binMove)
+      scoreMove(network, lastMove.binBoard)
       network.propagate(learningRate, [brainScore])
     }
   }
 }
 
-function scoreMove (network, binBoard, binMove) {
-  const input = ([]).concat(binBoard).concat(binMove)
-  return network.activate(input)
+function scoreMove (network, binBoard) {
+  return network.activate(binBoard)
 }
 
 function outputToScore (output) {

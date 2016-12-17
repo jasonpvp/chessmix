@@ -90,7 +90,7 @@ export class App extends React.Component {
             })
           } else {
             console.log('Chessters turn')
-            const nextMove = game.brain.getBestMove(game.board.ascii(), game.board.moves({verbose: true}))
+            const nextMove = game.brain.getBestMove(game.board, game.board.moves({verbose: true}))
             console.log(nextMove.move.piece + nextMove.move.from + nextMove.move.to + ' score: ' + nextMove.score)
             game.onMovePiece(nextMove.move.piece, nextMove.move.from, nextMove.move.to, nextMove.move.promotion)
           }
