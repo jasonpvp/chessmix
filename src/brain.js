@@ -1,8 +1,9 @@
 import synaptic from 'synaptic'
 
 export function ChessBrain () {
-  var network = new synaptic.Architect.Perceptron(272, 64, 32, 8, 3, 1)
+  var network = new synaptic.Architect.Perceptron(272, 64, 32, 16, 8, 4, 2, 1)
   var learningRate = 0.3
+  var lastMove
 
   return {
     network: network,
@@ -10,21 +11,32 @@ export function ChessBrain () {
       const binBoard = asciiBoardToBinary(boardAscii)
 
       const scoredMoves = shuffleArray(moves).map(move => {
-        const output = scoreMove(network, binBoard, verboseMoveToBinary(move))
+        const binMove = verboseMoveToBinary(move)
+//        const binMove = [0,0,0,0,0,0,0,0,0,0]
+        const output = scoreMove(network, binBoard, binMove)
+//        network.propagate(0.1, [Math.random()])
+
         return {
           move,
           output,
+          inputs: {
+            binBoard,
+            binMove
+          },
           score: output[0]
         }
       }).sort((a, b) => { (a.score < b.score) ? 1 : (a.score > b.score) ? -1 : 0})
 
       //console.log('scored: %o', scoredMoves)
+      lastMove = scoredMoves[0]
       return scoredMoves[0]
     },
     train: function (targetScore) {
+      if (!lastMove) return
       // assume the score is in -40..40
-      const brainScore = (targetScore + 40) / 80
+      const brainScore = 1//(targetScore + 40) / 80
       console.log('train with score: %s %s', targetScore, brainScore)
+      scoreMove(network, lastMove.binBoard, lastMove.binMove)
       network.propagate(learningRate, [brainScore])
     }
   }

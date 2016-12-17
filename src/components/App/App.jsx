@@ -14,8 +14,8 @@ const lightSquareColor = '#2492FF'
 const darkSquareColor = '#005EBB'
 const flip = false
 const squareSize = 70
-const moves = []
-
+let moves = []
+const newGame = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 export class App extends React.Component {
   constructor (props) {
     super(props)
@@ -23,7 +23,7 @@ export class App extends React.Component {
     this.board = new Chess()
     this.brain = new ChessBrain()
     this.state = {
-      fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      fen: newGame,
       lastMove: null,
       msg: '',
       autoPlay: false
@@ -62,8 +62,9 @@ export class App extends React.Component {
       if (this.state.autoPlay) {
         setTimeout(function () {
           if (game.board.in_checkmate()) {
-            game.setState({msg: 'Check mate!'})
-            return
+            moves = []
+            game.board.load(newGame)
+            game.setState({msg: 'Check mate!', fen: newGame})
           } else if (game.board.in_check()) {
             game.setState({msg: 'Check!'})
           }
