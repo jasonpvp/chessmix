@@ -11,7 +11,7 @@ export class Network extends React.Component {
       return mask.reduce((nj, _, j) => {
         const index = i * sqrt + j
         if (!neurons[index]) return nj
-        nj.push(<div key={`n${i}-${j}`} style={neuronStyle(neurons[index], i, j, size)}>{i}{j}</div>)
+        nj.push(<div key={`n${i}-${j}`} style={neuronStyle(neurons[index], i, j, size)}></div>)
         return nj
       }, ni)
     }, [])
@@ -38,8 +38,10 @@ function neuronStyle (neuron, i, j, size) {
 }
 
 function neuronBackgroundColor (neuron) {
-  const blue = biasToHex(neuron.bias)
-  return `#0000${blue}`
+  const blue = biasToHex(neuron.bias * 3)
+  const green = biasToHex(neuron.bias, 150)
+  const red = biasToHex(neuron.bias, 100)
+  return `#${red}${green}${blue}`
 }
 
 function neuronBorderColor (neuron) {

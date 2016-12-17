@@ -2,6 +2,7 @@ import synaptic from 'synaptic'
 
 export function ChessBrain () {
   var network = new synaptic.Architect.Perceptron(272, 64, 32, 8, 3, 1)
+  var learningRate = 0.3
 
   return {
     network: network,
@@ -19,6 +20,12 @@ export function ChessBrain () {
 
       //console.log('scored: %o', scoredMoves)
       return scoredMoves[0]
+    },
+    train: function (targetScore) {
+      // assume the score is in -40..40
+      const brainScore = (targetScore + 40) / 80
+      console.log('train with score: %s %s', targetScore, brainScore)
+      network.propagate(learningRate, [brainScore])
     }
   }
 }

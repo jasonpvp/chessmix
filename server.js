@@ -18,14 +18,14 @@ app.get('/getTrainerMove', function (req, res) {
   var cmd = ['node ' + trainer]
   if (req.query.fen) cmd.push.apply(cmd, ['-f', req.query.fen])
   if (req.query.moves) cmd.push.apply(cmd, ['-m', '"' + req.query.moves + '"'])
-  if (req.query.movetime) cmd.push.apply(cmd, ['-t', req.query.movetime])
+  if (req.query.movetime !== undefined) cmd.push.apply(cmd, ['-t', req.query.movetime])
 
   console.log('query: ' + JSON.stringify(req.query))
   console.log('cmd: ' + cmd.join(' '))
   exec(cmd.join(' '), (err, stdout, stderr) => {
     var lines = stdout.split(/\n/)
     console.log(lines)
-    var result = lines[0]
+    var result = lines[lines.length - 2]
     console.log('send result: ' + result)
     res.send(result)
   })

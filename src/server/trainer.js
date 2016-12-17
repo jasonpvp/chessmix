@@ -9,6 +9,7 @@ var got_uci
 var started_thinking
 var startTime = (new Date()).getTime()
 var duration
+var lastEvaluation
 
 // TODO: add more UCI command options: http://wbec-ridderkerk.nl/html/UCIProtocol.html
 const optionDefinitions = [
@@ -20,7 +21,7 @@ const optionDefinitions = [
 ]
 
 const options = commandLineArgs(optionDefinitions)
-options.movetime = options.movetime || 1
+options.movetime = (options.movetime !== undefined) ? options.movetime : 3
 
 logIfVerbose('options: ' + JSON.stringify(options))
 
@@ -69,6 +70,10 @@ function processMessage (line) {
     }
     logIfVerbose('go ponder')
     send("go ponder")
+  } else if (line.indexOf('Total Evaluation') > -1) {
+    var parts = line.split(' ')
+    lastEvaluation = parts[2]
+    if (parts[3].indexOf('black') > -1) lastEvaluation *= -1
   } else if (!started_thinking && line.indexOf("info depth") > -1) {
     logIfVerbose("Thinking...")
     started_thinking = true
@@ -81,7 +86,8 @@ function processMessage (line) {
     var output = {
       bestMove: match ? match[1] : 'none',
       duration: duration,
-      options: options
+      options: options,
+      lastEvaluation: parseFloat(lastEvaluation)
     }
     // report output
     console.log(JSON.stringify(output))

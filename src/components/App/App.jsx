@@ -69,10 +69,12 @@ export class App extends React.Component {
           }
           if (game.board.turn() === 'b') {
             console.log('trainers turn')
-            fetch('http://localhost:3000/getTrainerMove?moves=' + moves.join(' ')).then(response => {
+            fetch('http://localhost:3000/getTrainerMove?movetime=0&moves=' + moves.join(' ')).then(response => {
               return response.json()
             }).then(data => {
+              console.log(data)
               console.log(`trainer response: ${JSON.stringify(data)}`)
+              game.brain.train(data.lastEvaluation)
               const move = data.bestMove
               const from = move.slice(0, 2)
               const to = move.slice(2, 4)
