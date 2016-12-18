@@ -17,8 +17,9 @@ function Chesster (board, moveCallback) {
       if (options.moves) {
         applyMoves(board, options.moves)
       }
-      var brain = (board.turn() === 'b') ? blackBrain : whiteBrain
-      const move = brain.getBestMove(board, board.moves({verbose: true}))
+//      var brain = (board.turn() === 'b') ? blackBrain : whiteBrain
+      brain = blackBrain
+      const move = brain.getBestMove(board)
       move.options = options
       return move
     },
@@ -32,7 +33,7 @@ function Chesster (board, moveCallback) {
         board.load(board.fen())
         applyMoves(board, moves.slice(0, i))
         blackBrain.train(score)
-        score = (score + 0.5) * rate
+        score += (0.5 - score) * rate
       }
     }
   }

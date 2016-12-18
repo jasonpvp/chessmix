@@ -8,12 +8,11 @@ module.exports = {
 function ChessBrain () {
   var network = new synaptic.Architect.Perceptron(256, 64, 16, 4, 1)
   var learningRate = 0.3
-  var lastMove
-  var scoreBoard = new Chess()
 
   return {
     network: network,
     trainFenBoard: function (fen, score) {
+      var scoreBoard = new Chess()
       scoreBoard.load(fen)
       var binBoard = asciiBoardToBinary(scoreBoard.ascii())
       network.propagate(learningRate, [score])
@@ -23,21 +22,24 @@ function ChessBrain () {
       var moves = board.moves({verbose: true})
       var baseScore = scoreMove(network, asciiBoardToBinary(board.ascii()))[0]
       var boardFen = board.fen()
-      var scoredMoves = shuffleArray(moves).map(function (move) {
-        scoreBoard.load(board.fen())
-        scoreBoard.move(move)
-        var binBoard = asciiBoardToBinary(scoreBoard.ascii())
-        var output = scoreMove(network, binBoard)
-
-        return {
+      var scoredMoves = shuffleArray(moves).map(function (move, i) {
+        var scoredMove = {
+          index: i,
           nextMove: move.from + move.to + (move.promotion || ''),
-          nextMoveVerbose: move,
-          score: output.reduce(function (s, v) { return s + v}, 0) / 4
+          nextMoveVerbose: move
         }
+
+        board.move(move)
+        if (board.in_threefold_repetition()) {
+          scoredMove.score = -1
+        } else {
+          var binBoard = asciiBoardToBinary(board.ascii())
+          scoredMove.score = scoreMove(network, binBoard)[0]
+        }
+        board.undo()
+        return scoredMove
       }).sort(function (a, b) { return (a.score < b.score) ? 1 : (a.score > b.score) ? -1 : 0})
 
-      //console.log('scored: %o', scoredMoves)
-      lastMove = scoredMoves[0]
       return scoredMoves[0] || {}
     },
     train: function (targetScore) {

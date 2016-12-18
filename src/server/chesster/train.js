@@ -10,7 +10,7 @@ var players = {
 
 console.log('Start training Chesster...')
 var iter = 1
-while (iter > 0) {
+while (true) {
   trainGame()
   iter--
 }
@@ -27,32 +27,46 @@ function trainGame () {
   var playing = true
   var lastTurn
 
-  while (playing && moveCount < 100 && board.moves().length > 0) {
+  while (playing && moveCount < 200 && board.moves().length > 0) {
     var turn = board.turn()
     var move = players[turn].getNextMove({moves: moves.all})
-    if (board.game_over()) {
+    if (board.in_stalemate()) {
       playing = false
     } else {
+      process.stdout.write(move.nextMove + '(' + move.index + '/' + board.moves().length + '=' + move.score.toFixed(2) + ') ')
       board.move(move.nextMove, {sloppy: true})
       moves.all.push(move.nextMove)
       moves[turn].push(move.nextMove)
-      process.stdout.write(move.nextMove + ' ')
       moveCount++
       lastTurn = turn
     }
   }
-  if (board.in_stalemate() || board.in_draw()) {
+  var winner = '-'
+  if (!board.in_checkmate()) {
     console.log('Draw!')
   } else {
     console.log('Winner: ' + lastTurn)
+    winner = lastTurn
   }
   const trainingOptions = {
     board: board,
     moves: moves.all,
-    score: 0,
-    rate: 0.8
+    winner: winner,
+    rate: 0.05
   }
   console.log(board.ascii())
-  console.log('Train black with score: ' + trainingOptions.score + ', rate: ' + trainingOptions.rate + ', moves: ' + JSON.stringify(trainingOptions.moves))
-  players.b.train(trainingOptions)
+  trainPlayer('b', trainingOptions)
+//  trainPlayer('w', trainingOptions)
+}
+
+function trainPlayer (player, options) {
+  if (options.winner === player) {
+    options.score = 1
+  } else if (options.winner === '-') {
+    options.score = 0.35
+  } else {
+    options.score = 0
+  }
+  console.log('Train ' + player + ' with score: ' + options.score + ', rate: ' + options.rate)
+  players[player].train(options)
 }
