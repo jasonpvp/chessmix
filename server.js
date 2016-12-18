@@ -1,5 +1,8 @@
 var express = require('express')
 var app = express()
+var Chesster = require('./src/server/chesster').Chesster
+var chesster = new Chesster()
+
 var sys = require('sys')
 var exec = require('child_process').exec;
 var path = require('path')
@@ -14,7 +17,17 @@ app.use(function(req, res, next) {
   next()
 })
 
-app.get('/getTrainerMove', function (req, res) {
+app.get('/getMove', function (req, res) {
+  if (req.query.engine === 'stockfish') {
+    sendStockfishMove(req, res)
+  } else if (req.query.engine === 'chesster') {
+    var move = chesster.getNextMove({fen: req.query.fen, moves: req.query.moves.split(' ')})
+    console.log('Chesster move: ' + JSON.stringify(move))
+    res.send(move)
+  }
+})
+
+function sendStockfishMove (req, res) {
   var cmd = ['node ' + trainer]
   if (req.query.fen) cmd.push.apply(cmd, ['-f', req.query.fen])
   if (req.query.moves) cmd.push.apply(cmd, ['-m', '"' + req.query.moves + '"'])
@@ -29,7 +42,7 @@ app.get('/getTrainerMove', function (req, res) {
     console.log('send result: ' + result)
     res.send(result)
   })
-})
+}
 
 app.listen(3000, function () {
   console.log('Chesster running on port 3000!')

@@ -6,33 +6,37 @@ import { connect } from 'react-redux'
 import { actions } from '../../state/app_actions'
 import Chessdiagram from 'react-chessdiagram'
 import Chess from 'chess.js'
-import { Chesster } from '../../chesster'
-import { StockfishClient } from '../../stockfish_client'
 import { Network } from '../Network'
 require('./App.scss')
+
+import { ChessClient } from '../../chess_client'
+const chessClient = new ChessClient()
+
 
 const lightSquareColor = '#2492FF'
 const darkSquareColor = '#005EBB'
 const flip = false
-const squareSize = 70
-let moves = []
+const squareSize = 40
 const newGame = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+const initialState = {
+  fen: newGame,
+  lastMove: null,
+  msg: '',
+  autoPlay: true,
+  autoRestart: false,
+  moves: [],
+  whitePlayer: human(),
+  blackPlayer: chessClient.Chesster
+}
+
 export class App extends React.Component {
   constructor (props) {
     super(props)
     this.wrappedActions = actions(props.dispatch)
     this.board = new Chess()
-    this.chessterBlack = Chesster(this.board, this.onMovePiece)
-    this.chessterWhite = Chesster(this.board, this.onMovePiece)
-    this.stockfish = StockfishClient(this.board, this.onMovePiece)
-    this.blackPlayer = human()
-    this.whitePlayer = human()
-    this.state = {
-      fen: newGame,
-      lastMove: null,
-      msg: '',
-      autoPlay: false
-    }
+    window.game = this
+
+    this.state = initialState
   }
 
   getChildContext () {
@@ -41,55 +45,93 @@ export class App extends React.Component {
     }
   }
 
-  onMovePiece = (piece, fromSquare, toSquare, promotion = '') => {
-    const game = this
-    let move = fromSquare + toSquare
-    console.log('Move) piece: %s, from: %s to: %s, promotion: %s', piece, fromSquare, toSquare, promotion)
-    const type = piece.toLowerCase()
+  onMovePiece = (piece, from, to, promotion = '') => {
+    this.makeMove({
+      piece,
+      from,
+      to,
+      promotion
+    })
+  }
 
-    if (type === 'p' && ([1,8]).includes(parseInt(toSquare[1]))) {
-      let newType = promotion
-      while (!(['q', 'r', 'b', 'n']).includes(newType.toLowerCase())) {
-        newType = prompt('New piece (q, b, r, n)')
-      }
-      const newPiece = (type !== piece) ? newType.toLowerCase() : newType.toUpperCase()
-      move += newPiece
+  needsPromotion (options) {
+    return options.piece.toLowerCase() === 'p' && ([1,8]).includes(parseInt(options.to[1]))
+  }
+
+  promptPromotion () {
+    let newType = ''
+    while (!(['q', 'r', 'b', 'n']).includes(newType.toLowerCase())) {
+      newType = prompt('New piece (q, b, r, n)')
     }
+    if (this.board.turn() === 'W') newType = newType.toUpperCase()
+    return newType
+  }
+
+  makeMove = (options) => {
+    const piece = options.piece || this.board.get(options.from).type
+    console.log('Move) piece: %s, %o', piece, options)
+
+    if (this.needsPromotion({piece: piece, to: options.to}) && !options.promotion) {
+      options.promotion = this.promptPromotion()
+    }
+    const move = options.from + options.to + (options.promotion || '')
 
     this.board.move(move, {sloppy: true})
 
     if (this.board.fen() === this.state.fen) {
       this.setState({lastMove: 'Invalid move', msg: ''})
     } else {
-      moves.push(move)
-      this.setState({fen: this.board.fen(), lastMove: `${piece}${fromSquare}${toSquare}`, msg: ''})
+      let msg = ''
       if (game.board.in_checkmate()) {
-        game.setState({msg: 'Check mate!'})
+        msg = 'Check mate!'
       } else if (game.board.in_check()) {
-        game.setState({msg: 'Check!'})
+        msg = 'Check!'
       }
 
+      this.setState({
+        fen: this.board.fen(),
+        lastMove: `${piece}${options.from}${options.to}${options.promotion}`,
+        moves: [...this.state.moves, move],
+        msg
+      })
+
       if (this.state.autoPlay) {
-        setTimeout(function () {
-          if (game.board.in_checkmate()) {
-            moves = []
-            game.board.load(newGame)
-            game.setState({fen: newGame})
-          }
-          if (game.board.turn() === 'b') {
-            console.log('Blacks turn')
-            game.blackPlayer.makeMove(moves)
-          } else {
-            console.log('Whites turn')
-            game.whitePlayer.makeMove(moves)
-          }
-        }, 0)
+        this.scheduleMove()
       }
     }
   }
 
+  scheduleMove () {
+    const game = this
+    setTimeout(function () {
+      if (game.board.in_checkmate() && game.state.autoRestart) {
+        game.board.load(newGame)
+        game.setState(initialState)
+      }
+      game.makeNextMove()
+    }, 0)
+  }
+
+  makeNextMove () {
+    if (this.board.turn() === 'b') {
+      console.log('Blacks turn')
+      this.state.blackPlayer.getMove({moves: this.state.moves}).then(game.makeMove)
+    } else {
+      console.log('Whites turn')
+      this.state.whitePlayer.getMove({moves: this.state.moves}).then(game.makeMove)
+    }
+  }
+
   toggleAutoPlay = () => {
-    this.setState({autoPlay: !this.state.autoPlay})
+    const autoPlay = !this.state.autoPlay
+    this.setState({autoPlay})
+    if (autoPlay) this.scheduleMove()
+  }
+
+  toggleAutoRestart = () => {
+    const autoRestart = !this.state.autoRestart
+    this.setState({autoRestart})
+    if (this.state.autoPlay && autoResart) this.scheduleAutoMove()
   }
 
   classNames (options) {
@@ -102,7 +144,7 @@ export class App extends React.Component {
 
   render () {
     const { example } = this.props
-    const { lastMove, fen, msg, autoPlay } = this.state
+    const { lastMove, fen, msg, autoRestart, autoPlay } = this.state
     const appClasses = this.classNames()
     const headerClasses = this.classNames({descendant: 'header'})
     const titleClasses = this.classNames({descendant: 'title'})
@@ -125,11 +167,9 @@ export class App extends React.Component {
           <div className={titleClasses}>Chesster</div>
           <div className={lastMoveClasses}>{lastMoveMessage} {msg}</div>
           <button onClick={this.toggleAutoPlay}>{autoPlay ? 'Disable' : 'Enable'} AutoPlay</button>
+          <button onClick={this.toggleAutoRestart}>{autoRestart ? 'Disable' : 'Enable'} AutoRestart</button>
         </div>
         <Chessdiagram {...chessBoardProps} />
-        <div className={networkClasses}>
-          <Network networkJson={this.chessterWhite.brain.network.toJSON()} size={15} />
-        </div>
       </div>
     )
   }
@@ -143,6 +183,7 @@ export const AppContainer = connect(state => state)(App)
 
 function human () {
   return {
-    makeMove: () => {}
+    // return unresolved promise since humans are untrustworthy
+    getMove: () => new Promise(_ => {})
   }
 }

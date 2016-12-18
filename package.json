@@ -5,7 +5,8 @@
   "author": "jasonpvp@gmail.com",
   "license": "MIT",
   "scripts": {
-    "start": "[ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"; nvm use; echo \"NODE VERSION: `node -v`\"; (node server.js &) ; webpack-dev-server --hot --inline",
+    "start": "node server.js",
+    "dev": "webpack-dev-server --hot --inline",
     "karma": "BABEL_ENV='test' karma start",
     "test": "BABEL_ENV='test' karma start --single-run --reporters jenkins,mocha",
     "pretest": "npm run build",
