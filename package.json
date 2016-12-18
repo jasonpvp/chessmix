@@ -1,8 +1,9 @@
 {
-  "name": "chesster",
+  "name": "chessmix",
   "version": "0.0.1",
-  "description": "A program that plays chess",
+  "description": "A chess AI tournament server and dev environment",
   "author": "jasonpvp@gmail.com",
+  "repository": "git@github.com:jasonpvp/chessmix.git",
   "license": "MIT",
   "scripts": {
     "start": "node server.js",
