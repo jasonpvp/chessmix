@@ -78,8 +78,18 @@ export class App extends React.Component {
   }
 
   makeMove = (options) => {
-    const piece = options.piece || this.board.get(options.from).type
-    console.log('Move) piece: %s, %o', piece, options)
+    if (!(options.from && options.from.length && options.to && options.to.length)) return
+
+    let piece
+    try {
+      piece = options.piece || this.board.get(options.from).type
+    } catch(err) {
+      // An invalid move can occur on new game when switching opponents since computer opponent responses might be pending
+      console.log(this.board.ascii())
+      console.error('Invalid move options: %o', JSON.stringify(options))
+      return
+    }
+    console.log('Move) piece: %s, %o', piece, JSON.stringify(options))
 
     if (this.needsPromotion({piece: piece, to: options.to}) && !options.promotion) {
       options.promotion = this.promptPromotion()
@@ -113,7 +123,7 @@ export class App extends React.Component {
     const game = this
     setTimeout(function () {
       if (game.board.in_checkmate() && game.state.autoRestart) {
-        this.newGame()
+        game.newGame()
       }
       game.makeNextMove()
     }, 0)
@@ -124,9 +134,11 @@ export class App extends React.Component {
     const newState = {
       ...initialState,
       whitePlayer: this.state.whitePlayer,
-      blackPlayer: this.state.blackPlayer
+      blackPlayer: this.state.blackPlayer,
+      autoRestart: this.state.autoRestart
     }
     game.setState(newState)
+    this.scheduleMove()
   }
 
   makeNextMove () {

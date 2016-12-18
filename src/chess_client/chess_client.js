@@ -20,8 +20,7 @@ function getMove (options) {
     fetch(moveUrl(options)).then(response => {
       return response.json()
     }).then(data => {
-      console.log(data)
-      console.log(`${options.engine} response: ${JSON.stringify(data)}`)
+      console.log('%s response: %o', options.engine, data)
       resolve(moveToOptions(data.nextMove))
     })
   })
@@ -29,10 +28,10 @@ function getMove (options) {
 
 function moveUrl (options) {
   const moves = options.moves.join(' ')
-  return `${serverBaseUrl}/getMove?engine=${options.engine}&moves=${moves}`
+  return `${serverBaseUrl}/getMove?engine=${options.engine}&moves=${moves}&movetime=0`
 }
 
-function moveToOptions (move) {
+function moveToOptions (move = '') {
   // convert move like 'e7e5' to an object
   const from = move.slice(0, 2)
   const to = move.slice(2, 4)

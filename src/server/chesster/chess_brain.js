@@ -38,7 +38,7 @@ function ChessBrain () {
 
       //console.log('scored: %o', scoredMoves)
       lastMove = scoredMoves[0]
-      return scoredMoves[0]
+      return scoredMoves[0] || {}
     },
     train: function (targetScore) {
       if (!lastMove) return

@@ -12,22 +12,13 @@ function Chesster (board, moveCallback) {
   var board = new Chess()
 
   return {
-    makeMove: function (moves) {
-      const nextMove = brain.getBestMove(board, board.moves({verbose: true}))
-      console.log(nextMove.move.piece + nextMove.move.from + nextMove.move.to + ' score: ' + nextMove.score)
-      moveCallback(nextMove.move.piece, nextMove.move.from, nextMove.move.to, nextMove.move.promotion)
-    },
     getNextMove: function (options) {
       board.load(options.fen || newGame)
       if (options.moves) {
-console.log(options.moves)
         for (var i = 0; i < options.moves.length; i++) {
-console.log('move ' + options.moves[i])
           board.move(options.moves[i], {sloppy: true})
         }
       }
-console.log(board.ascii())
-
       var brain = (board.turn() === 'b') ? blackBrain : whiteBrain
       const move = brain.getBestMove(board, board.moves({verbose: true}))
       console.log(move)
