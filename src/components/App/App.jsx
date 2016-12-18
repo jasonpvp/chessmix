@@ -113,16 +113,20 @@ export class App extends React.Component {
     const game = this
     setTimeout(function () {
       if (game.board.in_checkmate() && game.state.autoRestart) {
-        game.board.load(newGame)
-        const newState = {
-          ...initialState,
-          whitePlayer: this.state.whitePlayer,
-          blackPlayer: this.state.blackPlayer
-        }
-        game.setState(newState)
+        this.newGame()
       }
       game.makeNextMove()
     }, 0)
+  }
+
+  newGame = () => {
+    game.board.load(newGame)
+    const newState = {
+      ...initialState,
+      whitePlayer: this.state.whitePlayer,
+      blackPlayer: this.state.blackPlayer
+    }
+    game.setState(newState)
   }
 
   makeNextMove () {
@@ -194,6 +198,7 @@ export class App extends React.Component {
         <div className={headerClasses}>
           <div className={titleClasses}>Chesster</div>
           <div className={lastMoveClasses}>{lastMoveMessage} {msg}</div>
+          <button onClick={this.newGame}>New game</button>
           <button onClick={this.toggleAutoRestart}>{autoRestart ? 'Disable' : 'Enable'} AutoRestart</button>
           <button onClick={this.toggleWhitePlayer}>White: {whitePlayer.name}</button>
           <button onClick={this.toggleBlackPlayer}>Black: {blackPlayer.name}</button>
