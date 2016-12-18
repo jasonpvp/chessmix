@@ -3,9 +3,11 @@ const serverBaseUrl = 'http://localhost:3000'
 export function ChessClient () {
   return {
     Stockfish: {
+      name: 'Stockfish',
       getMove: (options) => getMove({...options, engine: 'stockfish'})
     },
     Chesster: {
+      name: 'Chesster',
       getMove: (options) => getMove({...options, engine: 'chesster'})
     }
   }

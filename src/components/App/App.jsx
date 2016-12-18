@@ -22,11 +22,14 @@ const initialState = {
   fen: newGame,
   lastMove: null,
   msg: '',
-  autoPlay: true,
   autoRestart: false,
   moves: [],
   whitePlayer: human(),
   blackPlayer: chessClient.Chesster
+}
+const playerOptions = {
+  human: human(),
+  ...chessClient
 }
 
 export class App extends React.Component {
@@ -46,6 +49,13 @@ export class App extends React.Component {
   }
 
   onMovePiece = (piece, from, to, promotion = '') => {
+    const t = this.board.turn()
+    const p = (t === 'b') ? 'blackPlayer' : 'whitePlayer'
+    if (t !== this.board.get(from).color || this.state[p].name !== 'human') {
+      this.setState({msg: 'Cant do that'})
+      return
+    }
+
     this.makeMove({
       piece,
       from,
@@ -95,9 +105,7 @@ export class App extends React.Component {
         msg
       })
 
-      if (this.state.autoPlay) {
-        this.scheduleMove()
-      }
+      this.scheduleMove()
     }
   }
 
@@ -106,7 +114,12 @@ export class App extends React.Component {
     setTimeout(function () {
       if (game.board.in_checkmate() && game.state.autoRestart) {
         game.board.load(newGame)
-        game.setState(initialState)
+        const newState = {
+          ...initialState,
+          whitePlayer: this.state.whitePlayer,
+          blackPlayer: this.state.blackPlayer
+        }
+        game.setState(newState)
       }
       game.makeNextMove()
     }, 0)
@@ -122,16 +135,31 @@ export class App extends React.Component {
     }
   }
 
-  toggleAutoPlay = () => {
-    const autoPlay = !this.state.autoPlay
-    this.setState({autoPlay})
-    if (autoPlay) this.scheduleMove()
-  }
-
   toggleAutoRestart = () => {
     const autoRestart = !this.state.autoRestart
     this.setState({autoRestart})
-    if (this.state.autoPlay && autoResart) this.scheduleAutoMove()
+    if (autoRestart) this.scheduleMove()
+  }
+
+  toggleWhitePlayer = () => {
+    this.togglePlayer('whitePlayer')
+  }
+
+  toggleBlackPlayer = () => {
+    this.togglePlayer('blackPlayer')
+  }
+
+  togglePlayer (player) {
+    const p = this.state[player]
+    const opts = Object.keys(playerOptions).sort()
+    let index = opts.indexOf(p.name) + 1
+    if (index >= opts.length) {
+      index = 0
+    }
+    let change = {}
+    change[player] = playerOptions[opts[index]]
+    this.setState(change)
+    this.scheduleMove()
   }
 
   classNames (options) {
@@ -144,7 +172,7 @@ export class App extends React.Component {
 
   render () {
     const { example } = this.props
-    const { lastMove, fen, msg, autoRestart, autoPlay } = this.state
+    const { lastMove, fen, msg, autoRestart, whitePlayer, blackPlayer } = this.state
     const appClasses = this.classNames()
     const headerClasses = this.classNames({descendant: 'header'})
     const titleClasses = this.classNames({descendant: 'title'})
@@ -166,8 +194,9 @@ export class App extends React.Component {
         <div className={headerClasses}>
           <div className={titleClasses}>Chesster</div>
           <div className={lastMoveClasses}>{lastMoveMessage} {msg}</div>
-          <button onClick={this.toggleAutoPlay}>{autoPlay ? 'Disable' : 'Enable'} AutoPlay</button>
           <button onClick={this.toggleAutoRestart}>{autoRestart ? 'Disable' : 'Enable'} AutoRestart</button>
+          <button onClick={this.toggleWhitePlayer}>White: {whitePlayer.name}</button>
+          <button onClick={this.toggleBlackPlayer}>Black: {blackPlayer.name}</button>
         </div>
         <Chessdiagram {...chessBoardProps} />
       </div>
@@ -183,6 +212,7 @@ export const AppContainer = connect(state => state)(App)
 
 function human () {
   return {
+    name: 'human',
     // return unresolved promise since humans are untrustworthy
     getMove: () => new Promise(_ => {})
   }
