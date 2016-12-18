@@ -12,7 +12,8 @@
     "pretest": "npm run build",
     "build": "npm run lint && webpack --progress --colors --config webpack/production.js",
     "lint": "standard",
-    "prepush": "npm test"
+    "prepush": "npm test",
+    "train": "node train.js"
   },
   "devDependencies": {
     "autoprefixer-loader": "^3.2.0",

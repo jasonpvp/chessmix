@@ -41,13 +41,7 @@ function ChessBrain () {
       return scoredMoves[0] || {}
     },
     train: function (targetScore) {
-      if (!lastMove) return
-      // assume the score is in -40..40
-//      var brainScore = (targetScore + 40) / 80
-//      console.log('train with score: %s %s', targetScore, brainScore)
-//      scoreMove(network, lastMove.binBoard)
-      var brainScore = targetScore
-      network.propagate(learningRate, [brainScore])
+      network.propagate(learningRate, [targetScore])
     }
   }
 }

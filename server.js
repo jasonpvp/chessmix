@@ -8,9 +8,6 @@ var exec = require('child_process').exec;
 var path = require('path')
 var trainer = path.join(__dirname, 'src', 'server', 'trainer.js')
 
-function puts(error, stdout, stderr) { sys.puts(stdout) }
-exec("ls -la", puts);
-
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*")
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
