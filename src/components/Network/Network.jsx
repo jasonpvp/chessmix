@@ -44,9 +44,9 @@ function neuronStyle (neuron, connWeight, i, j, size) {
 }
 
 function neuronBackgroundColor (neuron, avgWeight) {
-  const blue = biasToHex(neuron.bias)
-  const green = biasToHex(avgWeight)
-  const red = biasToHex((neuron.bias + avgWeight) / 2, 100)
+  const blue = biasToHex(neuron.bias * 2)
+  const green = biasToHex(avgWeight, 128)
+  const red = biasToHex((neuron.bias + avgWeight) / 2, 64)
   return `#${red}${green}${blue}`
 }
 

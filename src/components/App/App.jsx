@@ -6,7 +6,8 @@ import { connect } from 'react-redux'
 import { actions } from '../../state/app_actions'
 import Chessdiagram from 'react-chessdiagram'
 import Chess from 'chess.js'
-import { ChessBrain, boardToBinary, moveToBinary } from '../../brain'
+import { Chesster } from '../../chesster'
+import { StockfishClient } from '../../stockfish_client'
 import { Network } from '../Network'
 require('./App.scss')
 
@@ -21,14 +22,17 @@ export class App extends React.Component {
     super(props)
     this.wrappedActions = actions(props.dispatch)
     this.board = new Chess()
-    this.brain = new ChessBrain()
+    this.chessterBlack = Chesster(this.board, this.onMovePiece)
+    this.chessterWhite = Chesster(this.board, this.onMovePiece)
+    this.stockfish = StockfishClient(this.board, this.onMovePiece)
+    this.blackPlayer = human()
+    this.whitePlayer = human()
     this.state = {
       fen: newGame,
       lastMove: null,
       msg: '',
       autoPlay: false
     }
-    window.brain = this.brain
   }
 
   getChildContext () {
@@ -59,40 +63,25 @@ export class App extends React.Component {
     } else {
       moves.push(move)
       this.setState({fen: this.board.fen(), lastMove: `${piece}${fromSquare}${toSquare}`, msg: ''})
+      if (game.board.in_checkmate()) {
+        game.setState({msg: 'Check mate!'})
+      } else if (game.board.in_check()) {
+        game.setState({msg: 'Check!'})
+      }
+
       if (this.state.autoPlay) {
         setTimeout(function () {
           if (game.board.in_checkmate()) {
             moves = []
             game.board.load(newGame)
-            game.setState({msg: 'Check mate!', fen: newGame})
-          } else if (game.board.in_check()) {
-            game.setState({msg: 'Check!'})
+            game.setState({fen: newGame})
           }
           if (game.board.turn() === 'b') {
-            console.log('trainers turn')
-            fetch('http://localhost:3000/getTrainerMove?movetime=0&moves=' + moves.join(' ')).then(response => {
-              return response.json()
-            }).then(data => {
-              console.log(data)
-              console.log(`trainer response: ${JSON.stringify(data)}`)
-              game.brain.train(data.lastEvaluation)
-              const move = data.bestMove
-              const from = move.slice(0, 2)
-              const to = move.slice(2, 4)
-              const promotion = move.slice(4, 5)
-              const nextMove = {
-                piece: game.board.get(from).type,
-                from,
-                to,
-                promotion
-              }
-              game.onMovePiece(nextMove.piece, nextMove.from, nextMove.to, nextMove.promotion)
-            })
+            console.log('Blacks turn')
+            game.blackPlayer.makeMove(moves)
           } else {
-            console.log('Chessters turn')
-            const nextMove = game.brain.getBestMove(game.board, game.board.moves({verbose: true}))
-            console.log(nextMove.move.piece + nextMove.move.from + nextMove.move.to + ' score: ' + nextMove.score)
-            game.onMovePiece(nextMove.move.piece, nextMove.move.from, nextMove.move.to, nextMove.move.promotion)
+            console.log('Whites turn')
+            game.whitePlayer.makeMove(moves)
           }
         }, 0)
       }
@@ -139,7 +128,7 @@ export class App extends React.Component {
         </div>
         <Chessdiagram {...chessBoardProps} />
         <div className={networkClasses}>
-          <Network networkJson={this.brain.network.toJSON()} size={15} />
+          <Network networkJson={this.chessterWhite.brain.network.toJSON()} size={15} />
         </div>
       </div>
     )
@@ -151,3 +140,9 @@ App.childContextTypes = {
 }
 
 export const AppContainer = connect(state => state)(App)
+
+function human () {
+  return {
+    makeMove: () => {}
+  }
+}
