@@ -102,9 +102,9 @@ export class App extends React.Component {
       this.setState({lastMove: 'Invalid move', msg: ''})
     } else {
       let msg = ''
-      if (game.board.in_checkmate()) {
+      if (this.board.in_checkmate()) {
         msg = 'Check mate!'
-      } else if (game.board.in_check()) {
+      } else if (this.board.in_check()) {
         msg = 'Check!'
       }
 
@@ -130,24 +130,24 @@ export class App extends React.Component {
   }
 
   newGame = () => {
-    game.board.load(newGame)
+    this.board.load(newGame)
     const newState = {
       ...initialState,
       whitePlayer: this.state.whitePlayer,
       blackPlayer: this.state.blackPlayer,
       autoRestart: this.state.autoRestart
     }
-    game.setState(newState)
+    this.setState(newState)
     this.scheduleMove()
   }
 
   makeNextMove () {
     if (this.board.turn() === 'b') {
       console.log('Blacks turn')
-      this.state.blackPlayer.getMove({moves: this.state.moves}).then(game.makeMove)
+      this.state.blackPlayer.getMove({moves: this.state.moves}).then(this.makeMove)
     } else {
       console.log('Whites turn')
-      this.state.whitePlayer.getMove({moves: this.state.moves}).then(game.makeMove)
+      this.state.whitePlayer.getMove({moves: this.state.moves}).then(this.makeMove)
     }
   }
 
