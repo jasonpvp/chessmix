@@ -1,0 +1,18 @@
+score board based on
+- pieces on the board
+- mobility of pieces
+- pieces covered by other pieces
+- pieces at risk of being taken
+- moves away from kings
+- prefer check when it leads to a near-term advantage
+- prefer checkmate
+- prefer near-term advantage to long-term
+
+Use calculated scores to train neural networks on recognizing each
+
+Cache path calculations
+abort paths that result in significant piece loss. Possibly consider more scores depending on resources
+Select paths to explore based on neural net score of each next step?
+
+Train neural net to recognize a good sequence of moves
+
