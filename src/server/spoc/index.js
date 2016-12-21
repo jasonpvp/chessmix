@@ -1,4 +1,4 @@
-var Chesster = require('./chesster').Chesster
+var Spoc = require('./spoc').Spoc
 module.exports = {
-  Chesster: Chesster
+  Spoc: Spoc
 }

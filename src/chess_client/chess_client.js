@@ -9,6 +9,10 @@ export function ChessClient () {
     Chesster: {
       name: 'Chesster',
       getMove: (options) => getMove({...options, engine: 'chesster'})
+    },
+    Spoc: {
+      name: 'Spoc',
+      getMove: (options) => getMove({...options, engine: 'spoc'})
     }
   }
 }

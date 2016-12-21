@@ -1,7 +1,12 @@
 var express = require('express')
 var app = express()
 var Chesster = require('./src/server/chesster').Chesster
-var chesster = new Chesster()
+var Spoc = require('./src/server/spoc').Spoc
+
+var engines = {
+  chesster: new Chesster(),
+  spoc: new Spoc()
+}
 
 var sys = require('sys')
 var exec = require('child_process').exec;
@@ -17,12 +22,19 @@ app.use(function(req, res, next) {
 app.get('/getMove', function (req, res) {
   if (req.query.engine === 'stockfish') {
     sendStockfishMove(req, res)
-  } else if (req.query.engine === 'chesster') {
-    var move = chesster.getNextMove({fen: req.query.fen, moves: req.query.moves.split(' ')})
-    console.log('Chesster move: ' + JSON.stringify(move))
-    res.send(move)
+  } else if (engines[req.query.engine]) {
+    res.send(getEngineMove(req.query))
+  } else {
+    console.log('engine not supported')
+    res.status(500).send('Engine: ' + req.query.engine + ' not supported')
   }
 })
+
+function getEngineMove (options) {
+  var move = engines[options.engine].getNextMove({fen: options.fen, moves: options.moves.split(' ')})
+  console.log(options.engine + ' move: ' + JSON.stringify(move))
+  return move
+}
 
 function sendStockfishMove (req, res) {
   var cmd = ['node ' + trainer]

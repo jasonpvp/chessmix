@@ -2,9 +2,27 @@ module.exports = {
   cardinalScore: cardinalScore
 }
 
-function cardinalScore (boardArray) {
-  var boardArray = asciiBoardToArray(board.ascii())
+const pieceValues = {
+  p: 1,
+  n: 2,
+  b: 3,
+  r: 4,
+  q: 5,
+  k: 6,
+  P: -1,
+  N: -2,
+  B: -3,
+  R: -4,
+  Q: -5,
+  K: -6
+}
 
+function cardinalScore (board) {
+  var boardArray = asciiBoardToArray(board.ascii())
+  var score = boardArray.reduce(function (sum, val) {
+    return sum + val
+  }, 0)
+  return score
 }
 
 function asciiBoardToArray (ascii) {
@@ -12,7 +30,7 @@ function asciiBoardToArray (ascii) {
   var bin = rows.reduce(function (bin, row) {
     if (row.indexOf('-') > -1 || row.indexOf('h') > -1) return bin
     var values = row.slice(5, 27).split(/\ +/).map(pieceToValue)
-    values.forEach(function (v) { return bin.push.apply(bin, v)})
+    bin.push.apply(bin, values)
     return bin
   }, [])
   return bin
@@ -20,21 +38,6 @@ function asciiBoardToArray (ascii) {
 
 function pieceToValue (piece) {
   return pieceValues[piece] || 0
-}
-
-const pieceValues = {
-  k: 1,
-  p: 2,
-  n: 3,
-  b: 4,
-  r: 5,
-  q: 6,
-  K: -1,
-  P: -2,
-  N: -3,
-  B: -4,
-  R: -5,
-  Q: -6
 }
 
 
