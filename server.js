@@ -31,8 +31,10 @@ app.get('/getMove', function (req, res) {
 })
 
 function getEngineMove (options) {
-  var move = engines[options.engine].getNextMove({fen: options.fen, moves: options.moves.split(' ')})
+  var moves = options.moves.split(' ')
+  var move = engines[options.engine].getNextMove({fen: options.fen, moves: moves})
   console.log(options.engine + ' move: ' + JSON.stringify(move))
+  move.allMoves = moves
   return move
 }
 
@@ -47,7 +49,8 @@ function sendStockfishMove (req, res) {
   exec(cmd.join(' '), (err, stdout, stderr) => {
     var lines = stdout.split(/\n/)
     console.log(lines)
-    var result = lines[lines.length - 2]
+    var result = JSON.parse(lines[lines.length - 2])
+    result.allMoves = req.query.moves.split(' ')
     console.log('send result: ' + result)
     res.send(result)
   })

@@ -94,11 +94,11 @@ function scoreMoves (options) {
 
   var selectedMoves
   var scoredMoves
-//  console.log('dpth) ' + options.depth + ', eval ' + moves.length + ' moves from ' + options.prevMove.nextMove + ': ' + moves.map(function (m) { return m.nextMove}).join(', '))
   if (options.depth === options.scoreDepth || options.depth === options.maxSearchDepth) {
 //    console.log('score moves at depth: ' + options.depth)
     scoredMoves = moves.map(function (move) { return scoreMove({board: board, move: move})}).sort(sortForPlayer(options.turn))
   }
+  if (options.depth === 0) console.log('dpth) ' + options.depth + ', eval ' + moves.length + ' moves from ' + options.prevMove.nextMove + ': ' + moves.map(function (m) { return m.nextMove + '(' + m.score + ')'}).join(', '))
 
   // TODO: also return score on checkmate
   if (options.depth === options.maxSearchDepth) {
@@ -109,6 +109,7 @@ function scoreMoves (options) {
   if (scoredMoves) {
     selectedMoves = scoredMoves.filter(function (scoredMove) {
       return scoredMove.score >= options.scoreThresholds.good
+if (move.nextMove === 'd8g5') console.log(scoredMove)
     }).slice(0, options.searchBreadth)
 
     var okMoves = shuffleArray(scoredMoves.filter(function (scoredMove) {
@@ -120,7 +121,7 @@ function scoreMoves (options) {
     selectedMoves = shuffleArray(moves).slice(0, options.searchBreadth)
   }
 
-  selectedMoves.forEach(function (move) {
+  selectedMoves.sort(sortForPlayer(options.turn)).forEach(function (move) {
     board.move(move.nextMove, {sloppy: true})
 //    process.stdout.write(move.nextMove + ', ')
     // subMoves are cached for each move, so the final move will have some scored already
@@ -130,7 +131,7 @@ function scoreMoves (options) {
       board: board,
       seenFens: options.seenFens,
       prevMove: move,
-      path: options.path + move.nextMove + ', ',
+      path: options.path + move.nextMove + '(' + move.score.toFixed(1) +  '), ',
       moves: getMoves({board: board}),
       depth: subDepth,
       turn: options.turn * -1,
@@ -145,6 +146,9 @@ function scoreMoves (options) {
     move.score += scoredSubMoves.reduce(function (sum, m) {
       return sum + m.score / (subDepth * options.weights.scoreDepthFactor)
     }, 0) * options.turn
+    if (options.depth === 0) {
+      console.log('Move) ' + move.nextMove + ', score: ' + move.score)
+    }
 //    move.subMoves = scoredSubMoves
   })
 
@@ -155,7 +159,7 @@ function scoreMove (options) {
   var board = options.board
 //console.log('move fro scoring ' + board.fen())
   board.move(options.move.nextMove, {sloppy: true})
-  var score = cardinalScore(board)
+  var score = cardinalScore(board, options.move.nextMove)
   options.move.score = score
 //console.log('undo for scoring')
   board.undo()
@@ -192,6 +196,7 @@ function getFen(options) {
 
 function getMoves (options) {
   return options.board.moves({verbose: true}).map(function (move) {
+//    if (simpleMove(move) == 'h3g4') console.log(scoreMove({board: options.board, move: move}))
     return {
       move: move,
       nextMove: simpleMove(move), // TODO: make client use just move

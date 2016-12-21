@@ -2,17 +2,20 @@ const serverBaseUrl = 'http://localhost:3000'
 
 export function ChessClient () {
   return {
+    Spoc: {
+      name: 'Spoc',
+      order: 0,
+      getMove: (options) => getMove({...options, engine: 'spoc'})
+    },
     Stockfish: {
       name: 'Stockfish',
+      order: 2,
       getMove: (options) => getMove({...options, engine: 'stockfish'})
     },
     Chesster: {
       name: 'Chesster',
+      order: 1,
       getMove: (options) => getMove({...options, engine: 'chesster'})
-    },
-    Spoc: {
-      name: 'Spoc',
-      getMove: (options) => getMove({...options, engine: 'spoc'})
     }
   }
 }

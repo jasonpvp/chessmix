@@ -25,7 +25,7 @@ const initialState = {
   autoRestart: false,
   moves: [],
   whitePlayer: human(),
-  blackPlayer: chessClient.Chesster
+  blackPlayer: human()
 }
 const playerOptions = {
   human: human(),
@@ -167,7 +167,7 @@ export class App extends React.Component {
 
   togglePlayer (player) {
     const p = this.state[player]
-    const opts = Object.keys(playerOptions).sort()
+    const opts = Object.keys(playerOptions).sort((a, b) => (a.order < b.order) ? -1 : (a.order > b.order) ? 1 : 0)
     let index = opts.indexOf(p.name) + 1
     if (index >= opts.length) {
       index = 0
