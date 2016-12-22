@@ -8,7 +8,7 @@ const optionDefinitions = [
 ]
 
 const options = commandLineArgs(optionDefinitions)
-const trainer = path.join(__dirname, 'src', 'server', options.engine, 'train.js')
+const trainer = path.join(__dirname, 'src', 'engine', options.engine, 'train.js')
 const args = [trainer ]
 console.log('run: node ' + args.join(' '))
 run ('node', args, data => process.stdout.write(data))

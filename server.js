@@ -1,7 +1,7 @@
 var express = require('express')
 var app = express()
-var Chesster = require('./src/server/chesster').Chesster
-var Spoc = require('./src/server/spoc').Spoc
+var Chesster = require('./src/engines/chesster').Chesster
+var Spoc = require('./src/engines/spoc').Spoc
 
 var engines = {
   chesster: new Chesster(),
@@ -11,7 +11,7 @@ var engines = {
 var sys = require('sys')
 var exec = require('child_process').exec;
 var path = require('path')
-var trainer = path.join(__dirname, 'src', 'server', 'trainer.js')
+var trainer = path.join(__dirname, 'src', 'engines', 'trainer.js')
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*")
