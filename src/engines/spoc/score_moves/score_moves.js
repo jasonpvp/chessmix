@@ -8,14 +8,12 @@
 *
 *   Options:
 *     context:
-*       board: the chess board object in a give state
+*       game: object for the board, player, current score, etc
 *       moves: options argument to provide previously-searched moves. When not provided, moves are obtained from the board.
 *       prevMove: the move the preceded the current board state
 *       haltSearch: called before each search recursion if search should be aborted. Current best move is passed to this function
 *       depth: current level of recursion in the move search
 *       turn: the player moving at the current depth: 1 for white, -1 for black
-*       player: the side the engine is playing: 1 for white, -1 for black
-*       currentScore: the score of the current board, where < 0 == black advantage, > 0 == white advantage
 *     score:
 *       staticScore: scores a board at a given state, optionally taking any parameters provided by pathScore
 *       predictedScore: used to update the score of a move based on scores of all subsequent moves searched
@@ -30,20 +28,19 @@ module.exports = {
 
 // TODO: allow context to include a moveCache
 var defaultContext = {
-  board: null,
+  game: null,
   moves: null,
   prevMove: null,
   haltSearch: null,
   maxDepth: 200,
   depth: 0,
   turn: null,
-  player: null,
-  currentScore: 0
+  game: null
 }
 
 function scoreMoves (options) {
   var context = Object.assign({}, defaultContext, options.context)
-  var board = context.board
+  var board = context.game.board
   var score = options.score
   var search = options.search
   var moves = getMoves(context)
@@ -90,7 +87,7 @@ function getMoves (options) {
     return options.moves
   }
 
-  return options.board.moves({verbose: true}).map(function (move) {
+  return options.game.board.moves({verbose: true}).map(function (move) {
     return {
       verboseMove: move,
       simpleMove: simpleMove(move),

@@ -1,5 +1,4 @@
 import { expect } from 'chai'
-//var sinon = require('sinon')
 import { scoreMoves } from './score_moves'
 
 describe('scoreMoves', () => {
@@ -11,9 +10,9 @@ describe('scoreMoves', () => {
   })
 
   it('gets moves to score', () => {
-    sinon.stub(context.board, 'moves').returns([])
+    sinon.stub(context.game.board, 'moves').returns([])
     scoreMoves({context: context, score: score, search: search})
-    expect(context.board.moves.called).to.be.true
+    expect(context.game.board.moves.called).to.be.true
   })
 
   it('returns move objects', () => {
@@ -21,7 +20,7 @@ describe('scoreMoves', () => {
       [{from: 'a2', to: 'a3'}],
       []
     ]
-    context.board.moves = () => movePath.shift()
+    context.game.board.moves = () => movePath.shift()
 
     var moves = scoreMoves({context, context, score: score, search: search})
     expect(moves[0]).to.eql({
@@ -51,7 +50,7 @@ describe('scoreMoves', () => {
 
   it('statically scores moves', () => {
     sinon.stub(score, 'staticScore').returns(100)
-    sinon.stub(context.board, 'moves').returns([
+    sinon.stub(context.game.board, 'moves').returns([
       {from: 'a2', to: 'a3'}
     ])
     var moves = scoreMoves({context, context, score: score, search: search})
@@ -60,7 +59,7 @@ describe('scoreMoves', () => {
 
   it('searches next moves, but avoids infinite recursion', () => {
     sinon.stub(search, 'scoreNextMoves').returns(true)
-    context.board.moves = () => [{from: 'a2', to: 'a3'}]
+    context.game.board.moves = () => [{from: 'a2', to: 'a3'}]
     scoreMoves({context, context, score: score, search: search})
     expect(search.scoreNextMoves.firstCall.args[0].context.depth).to.eql(0)
     expect(search.scoreNextMoves.callCount).to.eql(201)
@@ -69,7 +68,7 @@ describe('scoreMoves', () => {
 
   it('limits recursion', () => {
     sinon.stub(search, 'scoreNextMoves').returns(true)
-    context.board.moves = () => [{from: 'a2', to: 'a3'}]
+    context.game.board.moves = () => [{from: 'a2', to: 'a3'}]
     context.maxDepth = 10
     scoreMoves({context, context, score: score, search: search})
     expect(search.scoreNextMoves.firstCall.args[0].context.depth).to.eql(0)
@@ -79,7 +78,7 @@ describe('scoreMoves', () => {
 
   it('returns scored moves without searching next moves when search says to', () => {
     sinon.stub(search, 'scoreNextMoves').returns(false)
-    context.board.moves = () => [{from: 'a2', to: 'a3'}]
+    context.game.board.moves = () => [{from: 'a2', to: 'a3'}]
     scoreMoves({context, context, score: score, search: search})
     expect(search.scoreNextMoves.callCount).to.eql(1)
   })
@@ -90,7 +89,7 @@ describe('scoreMoves', () => {
       [{from: 'a2', to: 'a3'}],
       []
     ]
-    context.board.moves = () => movePath.shift()
+    context.game.board.moves = () => movePath.shift()
 
     scoreMoves({context, context, score: score, search: search})
     expect(search.scoreNextMoves.callCount).to.eql(2)
@@ -98,21 +97,24 @@ describe('scoreMoves', () => {
 
   it('searches next moves until the search is halted', () => {
     sinon.stub(context, 'haltSearch').returns(true)
-    sinon.stub(context.board, 'moves').returns([{from: 'a2', to: 'a3'}])
+    sinon.stub(context.game.board, 'moves').returns([{from: 'a2', to: 'a3'}])
     scoreMoves({context, context, score: score, search: search})
-    expect(context.board.moves.callCount).to.eql(1)
+    expect(context.game.board.moves.callCount).to.eql(1)
   })
 
   it('passes the next context on next move search', () => {
     sinon.stub(search, 'scoreNextMoves').returns(true)
-    context.board.moves = () => [{from: 'a2', to: 'a3'}]
+    context.game.board.moves = () => [{from: 'a2', to: 'a3'}]
     // recurse one level
-    context.board.move = () => {
-      context.board.moves = () => []
+    context.game.board.move = () => {
+      context.game.board.moves = () => []
     }
     scoreMoves({context, context, score: score, search: search})
     expect(search.scoreNextMoves.firstCall.args[0].context.depth).to.eql(0)
+    expect(search.scoreNextMoves.firstCall.args[0].context.turn).to.eql(1)
+
     expect(search.scoreNextMoves.secondCall.args[0].context.depth).to.eql(1)
+    expect(search.scoreNextMoves.secondCall.args[0].context.turn).to.eql(-1)
   })
 
   it('scores moves based on their nextMoves scores', () => {
@@ -123,7 +125,7 @@ describe('scoreMoves', () => {
       [],
       []
     ]
-    context.board.moves = () => movePath.shift()
+    context.game.board.moves = () => movePath.shift()
 
     // simply return the move as the score to make it easy to validate predicted score
     score.staticScore = options => options.move.simpleMove
@@ -136,8 +138,8 @@ describe('scoreMoves', () => {
   })
 
   it('resets the board after each recursion', () => {
-    sinon.stub(context.board, 'move')
-    sinon.stub(context.board, 'undo')
+    sinon.stub(context.game.board, 'move')
+    sinon.stub(context.game.board, 'undo')
 
     var movePath = [
       [{from: 'a2', to: 'a3'}],
@@ -146,11 +148,11 @@ describe('scoreMoves', () => {
       [],
       []
     ]
-    context.board.moves = () => movePath.shift()
+    context.game.board.moves = () => movePath.shift()
 
     scoreMoves({context, context, score: score, search: search})
-    expect(context.board.move.callCount).to.eql(4)
-    expect(context.board.undo.callCount).to.eql(4)
+    expect(context.game.board.move.callCount).to.eql(4)
+    expect(context.game.board.undo.callCount).to.eql(4)
   })
 
   it('sets the nextMoves for a move', () => {
@@ -159,7 +161,7 @@ describe('scoreMoves', () => {
       [{from: 'a3', to: 'a4'}],
       []
     ]
-    context.board.moves = () => movePath.shift()
+    context.game.board.moves = () => movePath.shift()
 
     var moves = scoreMoves({context, context, score: score, search: search})
     expect(moves[0].nextMoves[0].simpleMove).to.eql('a3a4')
@@ -172,7 +174,7 @@ describe('scoreMoves', () => {
       [{from: 'a3', to: 'a4'}],
       []
     ]
-    context.board.moves = () => movePath.shift()
+    context.game.board.moves = () => movePath.shift()
     scoreMoves({context, context, score: score, search: search})
 
     expect(search.scoreNextMoves.secondCall.args[0].context.prevMove.simpleMove).to.eql('a2a3')
@@ -181,12 +183,18 @@ describe('scoreMoves', () => {
 
 function mockContext () {
   return {
-    board: mockBoard(),
+    game: mockGame(),
     moves: null,
     prevMove: null,
     haltSearch: () => false,
     depth: 0,
-    turn: 1,
+    turn: 1
+  }
+}
+
+function mockGame () {
+  return {
+    board: mockBoard(),
     player: 1,
     currentScore: 0
   }
