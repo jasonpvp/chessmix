@@ -1,7 +1,7 @@
 var Chess = require('chess.js').Chess
 var Promise = require('bluebird')
 var scoreMoves = require('./score_moves').scoreMoves
-var Score = require('./score')
+var Evaluate = require('./evaluate')
 var search = require('./search')
 var games = {}
 
@@ -37,63 +37,55 @@ function Game (options) {
     scoreMoves: scoreMoves,
     search: search,
     bestNextMove: null,
-    currentScore: {
-      staticScore: 0,
-      predictedScore: 0
+    currentEval: {
+      staticEval: {score: 0},
+      predictiveEval: {score: 0}
     }
   }
-  game.score = new Score(scoreConfig({game: game})),
+  game.evaluate = new Evaluate(evalConfig({game: game})),
   games[game.board.fen()] = game
   return game
 }
 
-function scoreConfig (options) {
+function evalConfig (options) {
   return {
-    onStaticScore: function (score, options) {
+    onStaticEval: function (evaluation, options) {
       if (options.context.depth > 0) return
-console.log('static score ' + options.move.simpleMove + ' = ' + score)
+console.log('static eval ' + options.move.simpleMove + ' = ' + evaluation.score)
       var game = options.context.game
       var newMove = options.move
       if (!game.bestNextMove) {
         game.bestNextMove = newMove
-      } else if (!game.bestNextMove.predictedScore) {
-        var currentScore = playerScore({score: game.bestNextMove.staticScore, player: game.player})
-        var newScore = playerScore({score: newMove.staticScore, player: options.context.game.player})
-        if (newScore > currentScore) {
+      } else if (!game.bestNextMove.predictiveEval) {
+        if (evaluation.absScore > game.bestNextMove.staticEval.absScore) {
           game.bestNextMove = newMove
         }
       }
     },
-    onPredictedScore: function (score, options) {
+    onPredictiveEval: function (evaluation, options) {
       if (options.context.depth > 0) return
 console.log('predicted score ' + options.move.simpleMove + ' = ' + score)
       var game = options.context.game
       var newMove = options.move
 
-      if (!game.bestNextMove || !game.bestNextMove.predictedScore) {
+      if (!game.bestNextMove || !game.bestNextMove.predictiveScore) {
         game.bestNextMove = newMove
       } else {
-        var currentScore = playerScore({score: game.bestNextMove.predictedScore, player: game.player})
-        var newScore = playerScore({score: newMove.predictedScore, player: options.context.game.player})
-        if (newScore > currentScore) {
+        if (evaluation.absScore > game.bestNextMove.predictiveEval.absScore) {
           game.bestNextMove = newMove
         }
       }
     }
   }
-}
-
-function playerScore (options) {
-  return options.score * options.player
 }
 
 function moveGame (options) {
   var game = options.game
   delete games[game.board.fen()]
   game.board.move(options.move.verboseMove)
-  game.currentScore = {
-    staticScore: options.move.staticScore,
-    predictedScore: options.move.predictedScore
+  game.currentEval = {
+    staticEval: options.move.staticEval,
+    predictiveEval: options.move.predictiveEval
   }
   games[game.board.fen()] = game
 }
@@ -148,7 +140,7 @@ console.log('scoring moves...')
     game.scoreMoves({
       context: context,
       search: game.search,
-      score: game.score
+      evaluate: game.evaluate
     })
   })
 }

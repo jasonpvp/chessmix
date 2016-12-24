@@ -3,7 +3,7 @@
 *   It is stateless, but updates state on the collection of moves passed to it
 *   This function takes three general sets of options:
 *     - context:  the general context of the search, player, turn and current depth of the search
-*     - score:    functions for scoring a given board and series of moves leading to that board
+*     - evaluate:    functions for evaluating a given board and series of moves that could follow that board
 *     - search:   the strategy for searching moves
 *
 *   Options:
@@ -14,9 +14,9 @@
 *       haltSearch: called before each search recursion if search should be aborted. Current best move is passed to this function
 *       depth: current level of recursion in the move search
 *       turn: the player moving at the current depth: 1 for white, -1 for black
-*     score:
-*       staticScore: scores a board at a given state, optionally taking any parameters provided by pathScore
-*       predictedScore: used to update the score of a move based on scores of all subsequent moves searched
+*     evaluate:
+*       staticEval: evaluates a board at a given state with respect to the current context
+*       predictiveEval: evaluates a move with respect to all subsequent moves explored and with respect to the current context
 *     search:
 *       scoreNextMoves: based on context and moves, return a boolean of whether to score nextMoves
 *       sortMoves: provided the current context, a list of moves and the score object, returns moves sorted in order to search
@@ -43,18 +43,20 @@ function scoreMoves (options) {
   var context = Object.assign({}, defaultContext, options.context)
 
   var board = context.game.board
-  var score = options.score
+  var evaluate = options.evaluate
   var search = options.search
   var moves = getMoves(context)
 
   moves.forEach(function (move) {
-    if (move.staticScore !== null) return
-    move.staticScore = score.staticScore({context: context, move: move})
+    if (move.staticEval) return
+    board.move(move.verboseMove)
+    move.staticEval = evaluate.staticEval({context: context, move: move})
+    board.undo()
   })
 
   search.sortMoves({context: context, moves: moves})
 
-  console.log('Score path: ' + options.context.path)
+//  console.log('Score path: ' + options.context.path)
   if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: moves})) {
     return moves
   }
@@ -74,11 +76,11 @@ function scoreMoves (options) {
 
     var nextMoves = scoreMoves({
       context: nextContext,
-      score: score,
+      evaluate: evaluate,
       search: search
     })
 
-    move.predictedScore = score.predictedScore({context: context, move: move, nextMoves: nextMoves})
+    move.predictiveEval = evaluate.predictiveEval({context: context, move: move, nextMoves: nextMoves})
     move.nextMoves = nextMoves
     board.undo()
   }
@@ -95,8 +97,8 @@ function getMoves (options) {
     return {
       verboseMove: move,
       simpleMove: simpleMove(move),
-      staticScore: null,
-      predictedScore: null,
+      staticEval: null,
+      predictiveEval: null,
       nextMoves: null
     }
   })
@@ -105,5 +107,3 @@ function getMoves (options) {
 function simpleMove (verboseMove) {
   return verboseMove.from + verboseMove.to + (verboseMove.promotion || '')
 }
-
-

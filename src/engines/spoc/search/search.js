@@ -17,13 +17,13 @@ function sortMoves (options) {
 }
 
 function sortByScoreDesc (a, b) {
-  if (a.staticScore < b.staticScore) return 1
-  if (a.staticScore > b.staticScore) return -1
+  if (a.staticEval.score < b.staticEval.score) return 1
+  if (a.staticEval.score > b.staticEval.score) return -1
   return 0
 }
 
 function sortByScoreAsc (a, b) {
-  if (a.staticScore > b.staticScore) return 1
-  if (a.staticScore < b.staticScore) return -1
+  if (a.staticEval.score > b.staticEval.score) return 1
+  if (a.staticEval.score < b.staticEval.score) return -1
   return 0
 }
