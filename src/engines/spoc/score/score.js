@@ -13,12 +13,12 @@ module.exports = function (config) {
 
 function scoreWithCallback (scoreFunction, options, callback) {
   var s = scoreFunction(options)
-  callback({score: s, options: options})
+  callback(s, options)
   return s
 }
 
 function staticScore (options) {
-  var boardArray = asciiBoardToArray(options.board.ascii())
+  var boardArray = asciiBoardToArray(options.context.game.board.ascii())
   return cardinalScore({boardArray: boardArray})
 }
 

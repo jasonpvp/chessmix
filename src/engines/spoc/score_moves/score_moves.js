@@ -35,11 +35,13 @@ var defaultContext = {
   maxDepth: 200,
   depth: 0,
   turn: null,
-  game: null
+  game: null,
+  path: ''
 }
 
 function scoreMoves (options) {
   var context = Object.assign({}, defaultContext, options.context)
+
   var board = context.game.board
   var score = options.score
   var search = options.search
@@ -52,6 +54,7 @@ function scoreMoves (options) {
 
   search.sortMoves({context: context, moves: moves})
 
+  console.log('Score path: ' + options.context.path)
   if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: moves})) {
     return moves
   }
@@ -67,6 +70,7 @@ function scoreMoves (options) {
     board.move(move.verboseMove)
     nextContext.prevMove = move
     nextContext.moves = move.nextMoves
+    nextContext.path = context.path + move.simpleMove + ':'
 
     var nextMoves = scoreMoves({
       context: nextContext,

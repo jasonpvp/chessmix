@@ -23,7 +23,14 @@ app.get('/getMove', function (req, res) {
   if (req.query.engine === 'stockfish') {
     sendStockfishMove(req, res)
   } else if (engines[req.query.engine]) {
-    res.send(getEngineMove(req.query))
+    var options = req.query
+    var moves = options.moves.split(' ')
+    engines[options.engine].getNextMove({fen: options.fen, moves: moves}).then(function (move) {
+//      console.log(options.engine + ' move: ' + JSON.stringify(move))
+      move.allMoves = moves
+      move.nextMove = move.simpleMove
+      res.send(move)
+    })
   } else {
     console.log('engine not supported')
     res.status(500).send('Engine: ' + req.query.engine + ' not supported')
@@ -31,11 +38,6 @@ app.get('/getMove', function (req, res) {
 })
 
 function getEngineMove (options) {
-  var moves = options.moves.split(' ')
-  var move = engines[options.engine].getNextMove({fen: options.fen, moves: moves})
-  console.log(options.engine + ' move: ' + JSON.stringify(move))
-  move.allMoves = moves
-  return move
 }
 
 function sendStockfishMove (req, res) {
