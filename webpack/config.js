@@ -1,5 +1,7 @@
+var path = require('path')
+
 module.exports = {
-  context: __dirname + "/src",
+  context: __dirname + "/../src",
   entry: {
     javascript: "./index.jsx",
     html: "./index.html",
@@ -7,7 +9,7 @@ module.exports = {
 
   output: {
     filename: "app.js",
-    path: __dirname + "/dist"
+    path: __dirname + "../dist"
   },
   resolve: {
     extensions: ['', '.js', '.jsx', '.scss']
@@ -16,8 +18,14 @@ module.exports = {
     loaders: [
       {
         test: /\.jsx?$/,
-        exclude: /node_modules/,
-        loaders: ["babel-loader?stage=0"],
+        loader: 'babel-loader',
+        include: [
+          path.join(__dirname, '../src')
+        ],
+        query: {
+          plugins: ['transform-runtime'],
+          presets: ['es2015', 'stage-0', 'react'],
+        }
       },
       {
         test: /\.html$/,
@@ -27,6 +35,6 @@ module.exports = {
         test: /\.s?css$/,
         loader: 'style!css!autoprefixer-loader?browsers=last 2 versions!sass'
       }
-    ],
+    ]
   }
 }

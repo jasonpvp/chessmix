@@ -16,7 +16,7 @@ module.exports = function (config) {
     autoWatch: true,
     browsers: ['PhantomJS'],
     singleRun: false,
-    webpack: require('./webpack.config.js'),
+    webpack: require('./webpack/test'),
     webpackMiddleware: {
       noInfo: true
     }

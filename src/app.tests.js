@@ -1,4 +1,4 @@
-import 'phantomjs-polyfill'
+require('phantomjs-polyfill')
 require('es6-shim')
 require('array-includes').shim()
 

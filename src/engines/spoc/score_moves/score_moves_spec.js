@@ -1,14 +1,14 @@
 import { expect } from 'chai'
-import sinon from sinon
+//var sinon = require('sinon')
 import { scoreMoves } from './score_moves'
 
 describe('scoreMoves', () => {
   it('gets moves to score', () => {
     var context = mockContext()
-    sinon.stub(context, 'moves')
+    sinon.stub(context.board, 'moves')
     scoreMoves({context: context, score: mockScore(), search: mockSearch()})
 debugger
-    expect(context.moves)
+//    expect(context.moves)
   })
 })
 
