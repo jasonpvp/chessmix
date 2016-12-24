@@ -9,7 +9,7 @@ module.exports = function (config) {
       'src/app.tests.js': ['webpack']
     },
     exclude: [],
-    reporters: ['mocha', 'notify'],
+    reporters: ['mocha'],
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,

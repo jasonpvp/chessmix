@@ -9,16 +9,18 @@
 *   Options:
 *     context:
 *       board: the chess board object in a give state
+*       moves: options argument to provide previously-searched moves. When not provided, moves are obtained from the board.
+*       prevMove: the move the preceded the current board state
 *       haltSearch: called before each search recursion if search should be aborted. Current best move is passed to this function
 *       depth: current level of recursion in the move search
 *       turn: the player moving at the current depth: 1 for white, -1 for black
 *       player: the side the engine is playing: 1 for white, -1 for black
 *       currentScore: the score of the current board, where < 0 == black advantage, > 0 == white advantage
 *     score:
-*       boardScore: scores a board at a given state, optionally taking any parameters provided by pathScore
-*       moveScore: used to update the score of a move based on scores of all subsequent moves searched
+*       staticScore: scores a board at a given state, optionally taking any parameters provided by pathScore
+*       predictedScore: used to update the score of a move based on scores of all subsequent moves searched
 *     search:
-*       scoreNextMoves: based on context and scoredMoves, return a boolean of whether to score nextMoves
+*       scoreNextMoves: based on context and moves, return a boolean of whether to score nextMoves
 *       sortMoves: provided the current context, a list of moves and the score object, returns moves sorted in order to search
 */
 
@@ -26,43 +28,48 @@ module.exports = {
   scoreMoves: scoreMoves
 }
 
-// TODO: provide persistence for moves
+// TODO: allow context to include a moveCache
 var defaultContext = {
   board: null,
+  moves: null,
+  prevMove: null,
   haltSearch: null,
+  maxDepth: 200,
   depth: 0,
   turn: null,
   player: null,
   currentScore: 0
 }
 
-// TODO: search strategy needs to control depth based on context and move scores
 function scoreMoves (options) {
   var context = Object.assign({}, defaultContext, options.context)
   var board = context.board
   var score = options.score
   var search = options.search
+  var moves = getMoves(context)
 
-  var scoredMoves = getMoves({board: board}).map(function (move) {
-    return score.boardScore({context: context, move: move})
+  moves.forEach(function (move) {
+    if (move.staticScore !== null) return
+    move.staticScore = score.staticScore({context: context, move: move})
   })
 
-  var moves = search.sortMoves({context: context, scoredMoves})
+  search.sortMoves({context: context, moves: moves})
 
-  if (!search.scoreNextMoves({context: context, moves: moves})) {
+  if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: moves})) {
     return moves
   }
 
-  var i = 0
   var len = moves.length
   var nextContext = Object.assign({}, context, {
     depth: context.depth + 1,
     turn: context.turn * -1
   })
 
-  while (i < len && !context.haltSearch()) {
+  for (var i = 0; i < len && !context.haltSearch(); i++) {
     var move = moves[i]
-    board.move(move.move)
+    board.move(move.verboseMove)
+    nextContext.prevMove = move
+    nextContext.moves = move.nextMoves
 
     var nextMoves = scoreMoves({
       context: nextContext,
@@ -70,7 +77,7 @@ function scoreMoves (options) {
       search: search
     })
 
-    move.score = score.moveScore({context: context, move: move, nextMoves: nextMoves})
+    move.predictedScore = score.predictedScore({context: context, move: move, nextMoves: nextMoves})
     move.nextMoves = nextMoves
     board.undo()
   }
@@ -79,11 +86,16 @@ function scoreMoves (options) {
 }
 
 function getMoves (options) {
+  if (options.moves) {
+    return options.moves
+  }
+
   return options.board.moves({verbose: true}).map(function (move) {
     return {
-      move: move,
+      verboseMove: move,
       simpleMove: simpleMove(move),
-      score: 0,
+      staticScore: null,
+      predictedScore: null,
       nextMoves: null
     }
   })
