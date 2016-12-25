@@ -56,7 +56,7 @@ function scoreMoves (options) {
 
   search.sortMoves({context: context, moves: moves})
 
-//  console.log('Score path: ' + options.context.path)
+  console.log('Score path: ' + options.context.path)
   if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: moves})) {
     return moves
   }
@@ -72,7 +72,7 @@ function scoreMoves (options) {
     board.move(move.verboseMove)
     nextContext.prevMove = move
     nextContext.moves = move.nextMoves
-    nextContext.path = context.path + move.simpleMove + ':'
+    nextContext.path = context.path + move.simpleMove + '(' + move.staticEval.score + '):'
 
     var nextMoves = scoreMoves({
       context: nextContext,
@@ -94,12 +94,15 @@ function getMoves (options) {
   }
 
   return options.game.board.moves({verbose: true}).map(function (move) {
+    var simple = simpleMove(move)
     return {
       verboseMove: move,
-      simpleMove: simpleMove(move),
+      simpleMove: simple,
       staticEval: null,
       predictiveEval: null,
-      nextMoves: null
+      nextMoves: null,
+      path: options.path + ':' + simple,
+      depth: options.depth
     }
   })
 }

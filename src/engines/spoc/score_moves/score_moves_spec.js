@@ -28,7 +28,9 @@ describe('scoreMoves', () => {
       simpleMove: 'a2a3',
       staticEval: {score: 0},
       predictiveEval: {score: 0},
-      nextMoves: []
+      nextMoves: [],
+      depth: 0,
+      path: ':a2a3'
     })
   })
 
@@ -188,6 +190,7 @@ function mockContext () {
     moves: null,
     prevMove: null,
     haltSearch: () => false,
+    addScoredMove: () => {},
     depth: 0,
     turn: 1
   }

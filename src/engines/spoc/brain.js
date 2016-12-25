@@ -16,10 +16,13 @@ module.exports = function () {
     },
     getNextMove: function (options) {
       var game = options.game
-
+      console.log(options.game.board.ascii())
       return searchMoves(options).then(function () {
         moveGame({game: game, move: game.bestNextMove})
-        return game.bestNextMove
+        return {
+          move: game.bestNextMove,
+          searchStats: game.searchStats
+        }
       })
     }
   }
@@ -27,6 +30,7 @@ module.exports = function () {
 
 function findGame (options) {
   var fen = getFen(options)
+  return new Game(options)
   return games[fen] || new Game(options)
 }
 
@@ -36,10 +40,14 @@ function Game (options) {
     board: getBoard(options),
     scoreMoves: scoreMoves,
     search: search,
+    scoredMoves: {},
     bestNextMove: null,
     currentEval: {
       staticEval: {score: 0},
       predictiveEval: {score: 0}
+    },
+    searchStats: {
+      levels: []
     }
   }
   game.evaluate = new Evaluate(evalConfig({game: game})),
@@ -47,12 +55,37 @@ function Game (options) {
   return game
 }
 
+function addStats (type, evaluation, options) {
+  var context = options.context
+  var game = context.game
+
+  if (!game.searchStats.levels[context.depth]) {
+    game.searchStats.levels[context.depth] = {
+      depth: context.depth,
+      counts: {
+        static: 0,
+        predictive: 0
+      },
+      hist: {
+        static: {},
+        predictive: {}
+      }
+    }
+  }
+  var stat = game.searchStats.levels[context.depth]
+  stat.counts[type]++
+  var bucket = Math.floor(evaluation.score)
+  stat.hist[type][bucket] = stat.hist[type][bucket] || 0
+  stat.hist[type][bucket]++
+}
+
 function evalConfig (options) {
   return {
     onStaticEval: function (evaluation, options) {
+      addStats('static', evaluation, options)
       if (options.context.depth > 0) return
-console.log('static eval ' + options.move.simpleMove + ' = ' + evaluation.score)
       var game = options.context.game
+console.log('static eval ' + options.move.simpleMove + ' = ' + evaluation.score)
       var newMove = options.move
       if (!game.bestNextMove) {
         game.bestNextMove = newMove
@@ -63,8 +96,10 @@ console.log('static eval ' + options.move.simpleMove + ' = ' + evaluation.score)
       }
     },
     onPredictiveEval: function (evaluation, options) {
+      addStats('predictive', evaluation, options)
       if (options.context.depth > 0) return
-console.log('predicted score ' + options.move.simpleMove + ' = ' + score)
+console.log('predicted score ' + options.move.simpleMove + ' = ' + evaluation.score + ' at depth ' + options.context.depth)
+
       var game = options.context.game
       var newMove = options.move
 
@@ -125,7 +160,7 @@ console.log('search moves')
     var context = {
       game: options.game,
       turn: turn({board: options.game.board}),
-      maxDepth: 3,
+      maxDepth: 2,
       haltSearch: function () {
         if (((new Date()).getTime() - startTime) > timeLimit) {
           resolve()
@@ -134,7 +169,8 @@ console.log('search moves')
         return false
       }
     }
-console.log('scoring moves...')
+
+    console.log('scoring moves...')
     // move scoring continues until haltSearch above returns true
     // or until there are no more moves to score
     game.scoreMoves({

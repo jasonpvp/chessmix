@@ -28,7 +28,10 @@ function getMove (options) {
       return response.json()
     }).then(data => {
       console.log('%s response: %o', options.engine, data)
-      resolve(moveToOptions(data.nextMove))
+      if (!data.verboseMove && data.nextMove) {
+        data.verboseMove = moveToOptions(data.nextMove)
+      }
+      resolve(data)
     })
   })
 }

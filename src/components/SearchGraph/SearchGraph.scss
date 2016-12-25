@@ -1,0 +1,35 @@
+@import "../BaseStyles/SuitMixins.scss";
+
+@include namespace('chesster') {
+  @include component('SearchGraph') {
+    display: flex;
+    flex-direction: column;
+    width: 410px;
+    position: absolute;
+    top: 200px;
+    left: 800px;
+    border: solid 1px #999;
+    padding: 5px;
+    border-radius: 5px;
+    background: #9ab;
+    @include descendant('row') {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      padding: 2px;
+    }
+  }
+  @include component('HistHeatBar') {
+    width: 100%;
+    height: 10px;
+    position: relative;
+    @include descendant('bucket') {
+      width: 10px;
+      height: 10px;
+      position: absolute;
+      top: 0px;
+      border: inset 1px rgba(200,200,200,0.6);
+      box-sizing: border-box;
+    }
+  }
+}

@@ -6,7 +6,7 @@ import { connect } from 'react-redux'
 import { actions } from '../../state/app_actions'
 import Chessdiagram from 'react-chessdiagram'
 import Chess from 'chess.js'
-import { Network } from '../Network'
+import { SearchGraph } from '../SearchGraph'
 require('./App.scss')
 
 import { ChessClient } from '../../chess_client'
@@ -25,7 +25,8 @@ const initialState = {
   autoRestart: false,
   moves: [],
   whitePlayer: human(),
-  blackPlayer: human()
+  blackPlayer: human(),
+  searchStats: null
 }
 const playerOptions = {
   human: human(),
@@ -57,10 +58,14 @@ export class App extends React.Component {
     }
 
     this.makeMove({
-      piece,
-      from,
-      to,
-      promotion
+      move: {
+        verboseMove: {
+          piece,
+          from,
+          to,
+          promotion
+        }
+      }
     })
   }
 
@@ -78,25 +83,26 @@ export class App extends React.Component {
   }
 
   makeMove = (options) => {
-    if (!(options.from && options.from.length && options.to && options.to.length)) return
+    var move = options.move.verboseMove
+    if (!(move.from && move.from.length && move.to && move.to.length)) return
 
     let piece
     try {
-      piece = options.piece || this.board.get(options.from).type
+      piece = move.piece || this.board.get(moves.from).type
     } catch(err) {
       // An invalid move can occur on new game when switching opponents since computer opponent responses might be pending
       console.log(this.board.ascii())
-      console.error('Invalid move options: %o', JSON.stringify(options))
+      console.error('Invalid move options: %o', JSON.stringify(move))
       return
     }
-    console.log('Move) piece: %s, %o', piece, JSON.stringify(options))
+    console.log('Move) piece: %s, %o', piece, JSON.stringify(move))
 
-    if (this.needsPromotion({piece: piece, to: options.to}) && !options.promotion) {
-      options.promotion = this.promptPromotion()
+    if (this.needsPromotion({piece: piece, to: move.to}) && !move.promotion) {
+      move.promotion = this.promptPromotion()
     }
-    const move = options.from + options.to + (options.promotion || '')
+    const simpleMove = move.from + move.to + (move.promotion || '')
 
-    this.board.move(move, {sloppy: true})
+    this.board.move(move)
 
     if (this.board.fen() === this.state.fen) {
       this.setState({lastMove: 'Invalid move', msg: ''})
@@ -108,13 +114,14 @@ export class App extends React.Component {
         msg = 'Check!'
       }
 
-      this.setState({
+      let newState = {
         fen: this.board.fen(),
-        lastMove: `${piece}${options.from}${options.to}${options.promotion}`,
-        moves: [...this.state.moves, move],
+        lastMove: `${piece}${move.from}${move.to}${move.promotion}`,
+        moves: [...this.state.moves, simpleMove],
         msg
-      })
-
+      }
+      if (options.searchStats) newState.searchStats = options.searchStats
+      this.setState(newState)
       this.scheduleMove()
     }
   }
@@ -188,7 +195,7 @@ export class App extends React.Component {
 
   render () {
     const { example } = this.props
-    const { lastMove, fen, msg, autoRestart, whitePlayer, blackPlayer } = this.state
+    const { lastMove, fen, msg, autoRestart, whitePlayer, blackPlayer, searchStats } = this.state
     const appClasses = this.classNames()
     const headerClasses = this.classNames({descendant: 'header'})
     const titleClasses = this.classNames({descendant: 'title'})
@@ -216,6 +223,7 @@ export class App extends React.Component {
           <button onClick={this.toggleBlackPlayer}>Black: {blackPlayer.name}</button>
         </div>
         <Chessdiagram {...chessBoardProps} />
+        {searchStats && <SearchGraph {...searchStats} />}
       </div>
     )
   }
