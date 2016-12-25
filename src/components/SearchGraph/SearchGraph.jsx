@@ -25,6 +25,7 @@ export class SearchGraph extends React.Component {
     const { levels } = this.props
     const graphClassNames = this.classNames()
     const rowClassNames = this.classNames({descendant: 'row'})
+    const centerClassNames = this.classNames({descendant: 'center'})
     const rows = levels.map(level => {
       return (
         <div key={level.depth} className={rowClassNames}>
@@ -37,6 +38,7 @@ export class SearchGraph extends React.Component {
     return (
       <div className={graphClassNames}>
         Search histogram
+        <div className={centerClassNames} />
         {rows}
       </div>
     )
@@ -81,7 +83,8 @@ class HistHeatBar extends React.Component {
 // pct should be from 0 to 1
 function bucketColor (score, pct) {
   const gray = 128 + Math.floor(score * 127)
+  const green = 128 - Math.abs(Math.floor(score * 128))
   const alpha = pct * 0.75 + 0.25
-  var c = `rgba(${gray},${gray},${gray},${alpha})`
+  var c = `rgba(${gray},${green},${gray},${alpha})`
   return c
 }

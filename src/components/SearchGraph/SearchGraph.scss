@@ -18,6 +18,14 @@
       width: 100%;
       padding: 2px;
     }
+    @include descendant('center') {
+      position: absolute;
+      left: 211px;
+      top: 0;
+      height: 100%;
+      width: 1px;
+      background: #777;
+    }
   }
   @include component('HistHeatBar') {
     width: 100%;

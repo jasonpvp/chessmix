@@ -12,6 +12,7 @@
 *       moves: options argument to provide previously-searched moves. When not provided, moves are obtained from the board.
 *       prevMove: the move the preceded the current board state
 *       haltSearch: called before each search recursion if search should be aborted. Current best move is passed to this function
+*       onSearchCOmplete: called when all possible moves withing given parameters have been searched
 *       depth: current level of recursion in the move search
 *       turn: the player moving at the current depth: 1 for white, -1 for black
 *     evaluate:
@@ -32,6 +33,7 @@ var defaultContext = {
   moves: null,
   prevMove: null,
   haltSearch: null,
+  onSearchComplete: null,
   maxDepth: 200,
   depth: 0,
   turn: null,
@@ -56,7 +58,7 @@ function scoreMoves (options) {
 
   search.sortMoves({context: context, moves: moves})
 
-  console.log('Score path: ' + options.context.path)
+//  console.log('Score path: ' + options.context.path)
   if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: moves})) {
     return moves
   }
@@ -85,6 +87,9 @@ function scoreMoves (options) {
     board.undo()
   }
 
+  if (context.depth === 0) {
+    context.onSearchComplete()
+  }
   return moves
 }
 

@@ -18,6 +18,7 @@ module.exports = function () {
       var game = options.game
       console.log(options.game.board.ascii())
       return searchMoves(options).then(function () {
+        console.log('make best move: ' + game.bestNextMove.simpleMove)
         moveGame({game: game, move: game.bestNextMove})
         return {
           move: game.bestNextMove,
@@ -85,6 +86,8 @@ function evalConfig (options) {
       addStats('static', evaluation, options)
       if (options.context.depth > 0) return
       var game = options.context.game
+      var lb = game.bestNextMove
+
 console.log('static eval ' + options.move.simpleMove + ' = ' + evaluation.score)
       var newMove = options.move
       if (!game.bestNextMove) {
@@ -94,6 +97,9 @@ console.log('static eval ' + options.move.simpleMove + ' = ' + evaluation.score)
           game.bestNextMove = newMove
         }
       }
+      if (lb !== game.bestNextMove) {
+        console.log('new best move: %o', game.bestNextMove)
+      }
     },
     onPredictiveEval: function (evaluation, options) {
       addStats('predictive', evaluation, options)
@@ -102,13 +108,17 @@ console.log('predicted score ' + options.move.simpleMove + ' = ' + evaluation.sc
 
       var game = options.context.game
       var newMove = options.move
+      var lb = game.bestNextMove
 
-      if (!game.bestNextMove || !game.bestNextMove.predictiveScore) {
+      if (!game.bestNextMove || !game.bestNextMove.predictiveEval) {
         game.bestNextMove = newMove
       } else {
         if (evaluation.absScore > game.bestNextMove.predictiveEval.absScore) {
           game.bestNextMove = newMove
         }
+      }
+      if (lb !== game.bestNextMove) {
+        console.log('new best move: %o', game.bestNextMove)
       }
     }
   }
@@ -160,13 +170,18 @@ console.log('search moves')
     var context = {
       game: options.game,
       turn: turn({board: options.game.board}),
-      maxDepth: 2,
+      maxDepth: 1,
       haltSearch: function () {
         if (((new Date()).getTime() - startTime) > timeLimit) {
+          console.log('Search timed out')
           resolve()
           return true
         }
         return false
+      },
+      onSearchComplete: function () {
+        console.log('Search completed')
+        resolve()
       }
     }
 

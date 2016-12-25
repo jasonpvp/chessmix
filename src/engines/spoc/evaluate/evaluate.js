@@ -22,7 +22,6 @@ function staticEval (options) {
   var board = options.context.game.board
   var boardArray = asciiBoardToArray(board.ascii())
   var score = cardinalScore({boardArray: boardArray})
-  board.undo()
   return {
     score: score,
     absScore: score * options.context.game.player
