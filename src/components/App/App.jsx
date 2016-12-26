@@ -26,7 +26,8 @@ const initialState = {
   moves: [],
   whitePlayer: human(),
   blackPlayer: human(),
-  searchStats: null
+  searchStats: null,
+  prediction: ''
 }
 const playerOptions = {
   human: human(),
@@ -116,11 +117,12 @@ export class App extends React.Component {
 
       let newState = {
         fen: this.board.fen(),
-        lastMove: `${piece}${move.from}${move.to}${move.promotion}`,
+        lastMove: `${piece}${move.from}${move.to}${move.promotion || ''}`,
         moves: [...this.state.moves, simpleMove],
         msg
       }
       if (options.searchStats) newState.searchStats = options.searchStats
+      if (options.prediction) newState.prediction = options.prediction
       this.setState(newState)
       this.scheduleMove()
     }
@@ -195,7 +197,7 @@ export class App extends React.Component {
 
   render () {
     const { example } = this.props
-    const { lastMove, fen, msg, autoRestart, whitePlayer, blackPlayer, searchStats, moves } = this.state
+    const { lastMove, fen, msg, autoRestart, whitePlayer, blackPlayer, searchStats, prediction, moves } = this.state
     const appClasses = this.classNames()
     const headerClasses = this.classNames({descendant: 'header'})
     const titleClasses = this.classNames({descendant: 'title'})
@@ -224,6 +226,7 @@ export class App extends React.Component {
         </div>
         <Chessdiagram {...chessBoardProps} />
         {searchStats && <SearchGraph currentDepth={moves.length - 1} searchStats={searchStats} />}
+        {prediction && <div style={{position: 'absolute', top: '425px', left: '875px'}}>Prediction: {prediction.path}</div>}
       </div>
     )
   }

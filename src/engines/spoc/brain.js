@@ -20,15 +20,19 @@ module.exports = function () {
     getNextMove: function (options) {
       var game = options.game
       game.bestNextMove = null
+      game.bestPrediction = {
+        path: ''
+      }
       console.log(options.game.board.ascii())
       console.log('stats: ' + JSON.stringify(game.searchStats))
 
       return searchMoves(options).then(function () {
-        var bestMove = game.bestNextMove ||{}
+        var bestMove = game.bestNextMove || {}
         console.log('make best move: ' + bestMove.simpleMove)
         moveGame({game: game, move: bestMove})
         return {
           move: bestMove,
+          prediction: game.bestPrediction,
           searchStats: game.searchStats
         }
       })
@@ -49,6 +53,9 @@ function Game (options) {
     search: search,
     scoredMoves: {},
     bestNextMove: null,
+    bestPrediction: {
+      path: ''
+    },
     currentEval: {
       staticEval: {score: 0},
       predictiveEval: {score: 0}
@@ -89,6 +96,8 @@ function addStats (type, evaluation, options) {
 }
 
 function evalConfig (options) {
+  var lastPath = null
+
   return {
     onStaticEval: function (evaluation, options) {
       if (isNaN(evaluation.score)) return
@@ -111,29 +120,37 @@ console.log('static eval ' + options.move.simpleMove + ' = ' + evaluation.absSco
     onPredictiveEval: function (evaluation, options) {
       if (isNaN(evaluation.score)) return
       addStats('predictive', evaluation, options)
-      if (options.context.depth > 0) return
-console.log('predicted score ' + options.move.simpleMove + ' = ' + evaluation.absScore + ' at depth ' + options.context.depth)
-
       var game = options.context.game
       var newMove = options.move
+      var path = options.context.path + options.move.simpleMove + '(' + evaluation.score.toFixed(2) + ')'
+      if (!lastPath || path.indexOf(lastPath) === 0) {
+        lastPath = path
+      }
 
-      if (!game.bestNextMove) {
-        newMoveLog(game.bestNextMove, newMove, 'predictive', evaluation)
-        game.bestNextMove = newMove
-      } else {
-        var bestMove = game.bestNextMove.predictiveEval || game.bestNextMove.staticEval || {}
-        var bestScore = (bestMove.absScore !== null) ? bestMove.absScore : Number.NEGATIVE_INFINITY
-        if (evaluation.absScore > bestScore) {
+      if (options.context.depth === 0) {
+        if (predictiveBeatsOtherMove(evaluation, game.bestNextMove)) {
+          console.log('predicted score ' + options.move.simpleMove + ' = ' + evaluation.absScore + ' at depth ' + options.context.depth)
           newMoveLog(game.bestNextMove, newMove, 'predictive', evaluation)
           game.bestNextMove = newMove
+          game.bestPrediction = {
+            path: lastPath.split(':').slice(1).join(', ')
+          }
         }
+        lastPath = null
       }
     }
   }
 }
 
-function newMoveLog (oldMove, newMove, type, eval) {
-  console.log('!!! ' + newMove.simpleMove + ' ' + type + ' ' + eval.absScore + ' beats ' + moveLog(oldMove))
+function predictiveBeatsOtherMove (predictiveEval, otherMove) {
+  if (!otherMove) return true
+  var otherEval = otherMove.predictiveEval || otherMove.staticEval || {}
+  var otherScore = (otherEval.absScore !== null) ? otherEval.absScore : Number.NEGATIVE_INFINITY
+  return predictiveEval.absScore > otherEval.absScore
+}
+
+function newMoveLog (oldMove, newMove, type, evaluation) {
+  console.log('!!! ' + newMove.simpleMove + ' ' + type + ' ' + evaluation.absScore + ' beats ' + moveLog(oldMove))
 }
 
 function moveLog (move) {
