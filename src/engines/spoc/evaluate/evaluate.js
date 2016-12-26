@@ -29,13 +29,15 @@ function staticEval (options) {
 }
 
 function predictiveEval (options) {
-  var score = options.nextMoves.reduce(function (score, move) {
-    var moveEval = move.predictiveEval ? move.predictiveEval : move.staticEval
-    return score + moveEval.score / (options.context.depth || 1)
-  }, 0) / options.nextMoves.length
+  var turn = options.context.turn
+  var absScore = options.nextMoves.reduce(function (score, move) {
+    var moveScore = move.predictiveEval || move.staticEval
+    return score + moveScore.absScore / (options.context.depth || 1)
+  }, 0) / (options.nextMoves.length || 1)
+
   return {
-    score: score,
-    absScore: score * options.context.game.player
+    score: absScore * options.context.game.player,
+    absScore: absScore
   }
 }
 

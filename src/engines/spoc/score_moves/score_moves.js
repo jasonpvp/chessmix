@@ -45,14 +45,13 @@ function scoreMoves (options) {
   var context = Object.assign({}, defaultContext, options.context)
 
   var board = context.game.board
-if (context.depth === 0) console.log(board.ascii())
   var evaluate = options.evaluate
   var search = options.search
   var moves = getMoves(context)
 
   moves.forEach(function (move) {
     if (move.staticEval) return
-    board.move(move.verboseMove)
+    board.move(move.simpleMove, {sloppy: true})
     move.staticEval = evaluate.staticEval({context: context, move: move})
     board.undo()
   })
@@ -62,7 +61,7 @@ if (context.depth === 0) console.log(board.ascii())
   if (context.depth === 0) {
     console.log('top moves: %o', moves.map(m =>  m.simpleMove).join(', '))
   }
-//  console.log('Score path: ' + options.context.path)
+  console.log('Score path: ' + options.context.path)
   if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: moves})) {
     return moves
   }
@@ -75,10 +74,10 @@ if (context.depth === 0) console.log(board.ascii())
 
   for (var i = 0; i < len && !context.haltSearch(); i++) {
     var move = moves[i]
-    board.move(move.verboseMove)
+    board.move(move.simpleMove, {sloppy: true})
     nextContext.prevMove = move
     nextContext.moves = move.nextMoves
-    nextContext.path = context.path + move.simpleMove + '(' + move.staticEval.score + '):'
+    nextContext.path = context.path + move.simpleMove + '(' + move.staticEval.absScore + '):'
 
     var nextMoves = scoreMoves({
       context: nextContext,
@@ -117,5 +116,16 @@ function getMoves (options) {
 }
 
 function simpleMove (verboseMove) {
-  return verboseMove.from + verboseMove.to + (verboseMove.promotion || '')
+  var from = verboseMove.from
+  var to = verboseMove.to
+  if (to.length === 1) {
+    // when move is like 'a45' or 'a4b', make like 'a4a5' or 'a4b4'
+    // chess.js has a bug where the short form can break the board state
+    if (parseInt(to) > 0) {
+      to = from[0] + to
+    } else {
+      to = to + from[1]
+    }
+  }
+  return from + to + (verboseMove.promotion || '')
 }

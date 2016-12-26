@@ -1,4 +1,5 @@
-var Chess = require('chess.js').Chess
+var Chess = require('chess.js')
+Chess = Chess.Chess || Chess
 var Promise = require('bluebird')
 var scoreMoves = require('./score_moves').scoreMoves
 var Evaluate = require('./evaluate')
@@ -20,7 +21,6 @@ module.exports = function () {
       var game = options.game
       game.bestNextMove = null
       console.log(options.game.board.ascii())
-      console.log(Object.keys(options))
 console.log('stats: ' + JSON.stringify(game.searchStats))
       return searchMoves(options).then(function () {
         console.log('make best move: ' + game.bestNextMove.simpleMove)
@@ -89,37 +89,41 @@ function addStats (type, evaluation, options) {
 function evalConfig (options) {
   return {
     onStaticEval: function (evaluation, options) {
+      if (isNaN(evaluation.score)) return
       addStats('static', evaluation, options)
       if (options.context.depth > 0) return
       var game = options.context.game
 
-console.log('static eval ' + options.move.simpleMove + ' = ' + evaluation.score)
+console.log('static eval ' + options.move.simpleMove + ' = ' + evaluation.absScore)
       var newMove = options.move
       if (!game.bestNextMove) {
         game.bestNextMove = newMove
-        console.log('new best move: %o', game.bestNextMove)
+        console.log('new best move!!!')
       } else if (!game.bestNextMove.predictiveEval) {
         if (evaluation.absScore > game.bestNextMove.staticEval.absScore) {
           game.bestNextMove = newMove
-          console.log('new best move: %o', game.bestNextMove)
+          console.log('new best move!!!')
         }
       }
     },
     onPredictiveEval: function (evaluation, options) {
+      if (isNaN(evaluation.score)) return
       addStats('predictive', evaluation, options)
       if (options.context.depth > 0) return
-console.log('predicted score ' + options.move.simpleMove + ' = ' + evaluation.score + ' at depth ' + options.context.depth)
+console.log('predicted score ' + options.move.simpleMove + ' = ' + evaluation.absScore + ' at depth ' + options.context.depth)
 
       var game = options.context.game
       var newMove = options.move
 
-      if (!game.bestNextMove || !game.bestNextMove.predictiveEval) {
+      if (!game.bestNextMove) {
         game.bestNextMove = newMove
-        console.log('new best move: %o', game.bestNextMove)
+        console.log('new best move!!!')
       } else {
-        if (evaluation.absScore > game.bestNextMove.predictiveEval.absScore) {
+        var bestMove = game.bestNextMove.predictiveEval || game.bestNextMove.staticEval || {}
+        var bestScore = bestMove.absScore || Number.NEGATIVE_INFINITY
+        if (evaluation.absScore > bestScore) {
           game.bestNextMove = newMove
-          console.log('new best move: %o', game.bestNextMove)
+          console.log('new best move!!!')
         }
       }
     }
@@ -129,7 +133,7 @@ console.log('predicted score ' + options.move.simpleMove + ' = ' + evaluation.sc
 function moveGame (options) {
   var game = options.game
   delete games[game.board.fen()]
-  game.board.move(options.move.verboseMove)
+  game.board.move(options.move.simpleMove, {sloppy: true})
   game.currentEval = {
     staticEval: options.move.staticEval,
     predictiveEval: options.move.predictiveEval
@@ -154,8 +158,8 @@ function getBoard (options) {
 }
 
 function applyMoves (options) {
+  var moves = options.moves || []
   var board = options.board || new Chess()
-  var moves = options.moves
   for (var i = 0; i < moves.length; i++) {
     board.move(moves[i], {sloppy: true})
   }

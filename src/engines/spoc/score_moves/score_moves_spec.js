@@ -190,7 +190,7 @@ function mockContext () {
     moves: null,
     prevMove: null,
     haltSearch: () => false,
-    addScoredMove: () => {},
+    onSearchComplete: () => {},
     depth: 0,
     turn: 1
   }
