@@ -10,7 +10,7 @@ function Spoc () {
   return {
     getNextMove: function (options) {
       var game = brain.getGame(options)
-      return brain.getNextMove({game: game}).then(function (nextMove) {
+      return brain.getNextMove({game: game, moves: options.moves}).then(function (nextMove) {
         return nextMove
       })
     }

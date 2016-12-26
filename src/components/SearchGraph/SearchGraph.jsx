@@ -4,13 +4,16 @@ require('./SearchGraph.scss')
 
 export class SearchGraph extends React.Component {
   static propTypes = {
-    levels: PropTypes.arrayOf(PropTypes.shape({
-      depth: PropTypes.number,
-      hist: PropTypes.shape({
-        static: PropTypes.object,
-        predictive: PropTypes.object
-      })
-    }))
+    currentDepth: PropTypes.number,
+    searchStats: PropTypes.shape({
+      levels: PropTypes.arrayOf(PropTypes.shape({
+        depth: PropTypes.number,
+        hist: PropTypes.shape({
+          static: PropTypes.object,
+          predictive: PropTypes.object
+        })
+      }))
+    })
   }
 
   classNames (options) {
@@ -21,25 +24,46 @@ export class SearchGraph extends React.Component {
     })
   }
 
+  componentDidUpdate () {
+    this.refs.pane.scrollTop = this.props.currentDepth * 24
+  }
+
   render () {
-    const { levels } = this.props
+    const { currentDepth, searchStats: {levels} } = this.props
     const graphClassNames = this.classNames()
-    const rowClassNames = this.classNames({descendant: 'row'})
+    const hLegendClassNames = this.classNames({descendant: 'hLegend'})
+    const paneClassNames = this.classNames({descendant: 'pane'})
     const centerClassNames = this.classNames({descendant: 'center'})
     const rows = levels.map(level => {
+      const rowClassNames = this.classNames({
+        descendant: 'row',
+        states: {
+          current: (level.depth === currentDepth) ? 'current' : null
+        }
+      })
+
       return (
         <div key={level.depth} className={rowClassNames}>
-          <HistHeatBar key='static' total={level.counts.static} data={level.hist.static} />
-          <HistHeatBar key='predictive' total={level.counts.predictive} data={level.hist.predictive} />
+          <HistHeatBar key='static' type='static' total={level.counts.static} data={level.hist.static} />
+          <HistHeatBar key='predictive' type='predictive' total={level.counts.predictive} data={level.hist.predictive} />
         </div>
       )
     })
 
+    const centerStyle = {
+      height: `${levels.length * 25}px`
+    }
+
     return (
       <div className={graphClassNames}>
-        Search histogram
-        <div className={centerClassNames} />
-        {rows}
+        <div className={hLegendClassNames}>
+          <span>Advantage: Black</span>
+          <span>Advantage: White</span>
+        </div>
+        <div ref='pane' className={paneClassNames}>
+          <div className={centerClassNames} style={centerStyle}/>
+          {rows}
+        </div>
       </div>
     )
   }
@@ -55,17 +79,16 @@ class HistHeatBar extends React.Component {
   }
 
   render () {
-    const { data, total } = this.props
+    const { type, data, total } = this.props
     const classNames = this.classNames()
     const bucketClassNames = this.classNames({descendant: 'bucket'})
     const buckets = Object.keys(data).sort().map((score, i) => {
       const count = data[score]
       const scoreLimit = 20
       if (Math.abs(score) > scoreLimit) score = scoreLimit * Math.sign(score)
-      console.log('score: %s, count: %s, total: %s, color: %s', score, count, total, bucketColor(score / scoreLimit, count / total))
 
       let style = {
-        background: bucketColor(score / scoreLimit, count / total),
+        background: bucketColor(type, count / total),
         left: (score * 10 + 200) + 'px'
       }
       return <div key={i} className={bucketClassNames} style={style} />
@@ -81,10 +104,9 @@ class HistHeatBar extends React.Component {
 
 // score should be from -1 to 1
 // pct should be from 0 to 1
-function bucketColor (score, pct) {
-  const gray = 128 + Math.floor(score * 127)
-  const green = 128 - Math.abs(Math.floor(score * 128))
+function bucketColor (type, pct) {
+  const color = type === 'static' ? '0,94,187' : '200,0,255'
   const alpha = pct * 0.75 + 0.25
-  var c = `rgba(${gray},${green},${gray},${alpha})`
+  var c = `rgba(${color},${alpha})`
   return c
 }

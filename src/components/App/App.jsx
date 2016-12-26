@@ -195,7 +195,7 @@ export class App extends React.Component {
 
   render () {
     const { example } = this.props
-    const { lastMove, fen, msg, autoRestart, whitePlayer, blackPlayer, searchStats } = this.state
+    const { lastMove, fen, msg, autoRestart, whitePlayer, blackPlayer, searchStats, moves } = this.state
     const appClasses = this.classNames()
     const headerClasses = this.classNames({descendant: 'header'})
     const titleClasses = this.classNames({descendant: 'title'})
@@ -223,7 +223,7 @@ export class App extends React.Component {
           <button onClick={this.toggleBlackPlayer}>Black: {blackPlayer.name}</button>
         </div>
         <Chessdiagram {...chessBoardProps} />
-        {searchStats && <SearchGraph {...searchStats} />}
+        {searchStats && <SearchGraph currentDepth={moves.length - 1} searchStats={searchStats} />}
       </div>
     )
   }

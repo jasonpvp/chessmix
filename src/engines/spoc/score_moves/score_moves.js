@@ -45,6 +45,7 @@ function scoreMoves (options) {
   var context = Object.assign({}, defaultContext, options.context)
 
   var board = context.game.board
+if (context.depth === 0) console.log(board.ascii())
   var evaluate = options.evaluate
   var search = options.search
   var moves = getMoves(context)
@@ -58,6 +59,9 @@ function scoreMoves (options) {
 
   search.sortMoves({context: context, moves: moves})
 
+  if (context.depth === 0) {
+    console.log('top moves: %o', moves.map(m =>  m.simpleMove).join(', '))
+  }
 //  console.log('Score path: ' + options.context.path)
   if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: moves})) {
     return moves
