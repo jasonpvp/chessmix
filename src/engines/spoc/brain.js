@@ -21,12 +21,14 @@ module.exports = function () {
       var game = options.game
       game.bestNextMove = null
       console.log(options.game.board.ascii())
-console.log('stats: ' + JSON.stringify(game.searchStats))
+      console.log('stats: ' + JSON.stringify(game.searchStats))
+
       return searchMoves(options).then(function () {
-        console.log('make best move: ' + game.bestNextMove.simpleMove)
-        moveGame({game: game, move: game.bestNextMove})
+        var bestMove = game.bestNextMove ||{}
+        console.log('make best move: ' + bestMove.simpleMove)
+        moveGame({game: game, move: bestMove})
         return {
-          move: game.bestNextMove,
+          move: bestMove,
           searchStats: game.searchStats
         }
       })
@@ -97,12 +99,12 @@ function evalConfig (options) {
 console.log('static eval ' + options.move.simpleMove + ' = ' + evaluation.absScore)
       var newMove = options.move
       if (!game.bestNextMove) {
+        newMoveLog(game.bestNextMove, newMove, 'static', evaluation)
         game.bestNextMove = newMove
-        console.log('new best move!!!')
       } else if (!game.bestNextMove.predictiveEval) {
         if (evaluation.absScore > game.bestNextMove.staticEval.absScore) {
+          newMoveLog(game.bestNextMove, newMove, 'static', evaluation)
           game.bestNextMove = newMove
-          console.log('new best move!!!')
         }
       }
     },
@@ -116,18 +118,27 @@ console.log('predicted score ' + options.move.simpleMove + ' = ' + evaluation.ab
       var newMove = options.move
 
       if (!game.bestNextMove) {
+        newMoveLog(game.bestNextMove, newMove, 'predictive', evaluation)
         game.bestNextMove = newMove
-        console.log('new best move!!!')
       } else {
         var bestMove = game.bestNextMove.predictiveEval || game.bestNextMove.staticEval || {}
-        var bestScore = bestMove.absScore || Number.NEGATIVE_INFINITY
+        var bestScore = (bestMove.absScore !== null) ? bestMove.absScore : Number.NEGATIVE_INFINITY
         if (evaluation.absScore > bestScore) {
+          newMoveLog(game.bestNextMove, newMove, 'predictive', evaluation)
           game.bestNextMove = newMove
-          console.log('new best move!!!')
         }
       }
     }
   }
+}
+
+function newMoveLog (oldMove, newMove, type, eval) {
+  console.log('!!! ' + newMove.simpleMove + ' ' + type + ' ' + eval.absScore + ' beats ' + moveLog(oldMove))
+}
+
+function moveLog (move) {
+  if (!move) return 'null move'
+  return move.simpleMove + '(ss: ' + (move.staticEval || {}).absScore + ', ps: ' + (move.predictiveEval || {}).absScore + ')'
 }
 
 function moveGame (options) {

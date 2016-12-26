@@ -34,7 +34,11 @@ export class SearchGraph extends React.Component {
     const hLegendClassNames = this.classNames({descendant: 'hLegend'})
     const paneClassNames = this.classNames({descendant: 'pane'})
     const centerClassNames = this.classNames({descendant: 'center'})
-    const rows = levels.map(level => {
+    const rows = levels.map((level, i) => {
+      if (!level) {
+        console.log(`level ${i} null`)
+        return null
+      }
       const rowClassNames = this.classNames({
         descendant: 'row',
         states: {
