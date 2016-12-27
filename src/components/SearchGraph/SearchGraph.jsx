@@ -54,10 +54,6 @@ export class SearchGraph extends React.Component {
       )
     })
 
-    const centerStyle = {
-      height: `${levels.length * 25}px`
-    }
-
     return (
       <div className={graphClassNames}>
         <div className={hLegendClassNames}>
@@ -65,9 +61,9 @@ export class SearchGraph extends React.Component {
           <span>Advantage: White</span>
         </div>
         <div ref='pane' className={paneClassNames}>
-          <div className={centerClassNames} style={centerStyle}/>
           {rows}
         </div>
+        <div className={centerClassNames}/>
       </div>
     )
   }

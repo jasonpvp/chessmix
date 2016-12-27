@@ -61,7 +61,7 @@ function scoreMoves (options) {
   if (context.depth === 0) {
     console.log('top moves: %o', moves.map(m =>  m.simpleMove).join(', '))
   }
-  console.log('Score path: ' + options.context.path + ' with ' + moves.length + ' moves')
+//  console.log('Score path: ' + options.context.path + ' with ' + moves.length + ' moves')
   if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: moves})) {
     return moves
   }
@@ -74,6 +74,8 @@ function scoreMoves (options) {
 
   for (var i = 0; i < len && !context.haltSearch(); i++) {
     var move = moves[i]
+    if (!move) return
+
     board.move(move.simpleMove, {sloppy: true})
     nextContext.prevMove = move
     nextContext.moves = move.nextMoves
@@ -109,6 +111,7 @@ function getMoves (options) {
       staticEval: null,
       predictiveEval: null,
       nextMoves: null,
+      prevMove: options.prevMove,
       path: options.path + ':' + simple,
       depth: options.depth
     }

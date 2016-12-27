@@ -29,6 +29,7 @@ describe('scoreMoves', () => {
       staticEval: {score: 0},
       predictiveEval: {score: 0},
       nextMoves: [],
+      prevMove: null,
       depth: 0,
       path: ':a2a3'
     })
@@ -39,6 +40,7 @@ describe('scoreMoves', () => {
     search.sortMoves = options => {
       return options.moves.sort((a, b) => a.staticEval.score < b.staticEval.score ? 1 : (a.staticEval.score > b.staticEval.score ? -1 : 0))
     }
+    context.haltSearch = () => true
 
     context.moves = [
       {staticEval: {score: 10}},

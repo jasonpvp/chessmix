@@ -37,10 +37,12 @@
     }
     @include descendant('center') {
       position: absolute;
-      left: 209px;
+      left: 210px;
       top: 0;
       width: 1px;
+      height: 210px;
       background: #777;
+      opacity: 0.5;
     }
   }
   @include component('HistHeatBar') {

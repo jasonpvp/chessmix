@@ -25,10 +25,9 @@ app.get('/getMove', function (req, res) {
   } else if (engines[req.query.engine]) {
     var options = req.query
     var moves = options.moves.split(' ')
-    engines[options.engine].getNextMove({fen: options.fen, moves: moves}).then(function (options) {
-//      console.log(options.engine + ' move: ' + JSON.stringify(move))
-      options.allMoves = moves
-      res.send(options)
+    engines[options.engine].getNextMove({fen: options.fen, moves: moves}).then(function (result) {
+      result.allMoves = moves
+      res.send(result)
     })
   } else {
     console.log('engine not supported')

@@ -9,14 +9,39 @@ function scoreNextMoves (options) {
 
 // TODO: randomize with respect to good, ok and bad moves
 function sortMoves (options) {
-  var searchCount = (options.context.depth === 0) ? options.moves.length : 1//Math.ceil(4 / options.context.depth)
-  var m
-  if (options.context.turn === options.context.game.player) {
-    m = options.moves.sort(sortByScoreDesc).slice(0, searchCount)
+  var searchCount
+  var goodCount = 5
+  var moveCount = options.moves.length
+  if (options.context.depth < 2) {
+    searchCount = (10 <= moveCount) ? 10 : moveCount
+  } else if (options.context.depth < 4) {
+    searchCount = 2
   } else {
-    m = options.moves.sort(sortByScoreAsc).slice(0, searchCount)
+    searchCount = 1
   }
-  return m
+
+  if (options.context.turn === options.context.game.player) {
+    options.moves.sort(sortByScoreDesc)
+  } else {
+    options.moves.sort(sortByScoreAsc)
+  }
+  if (searchCount === moveCount) {
+    return options.moves
+  }
+
+  var searchMoves
+  if (searchCount > goodCount) {
+    searchMoves = options.moves.slice(0,goodCount)
+    var remainCount = searchCount - goodCount
+    var interval = Math.floor((moveCount - goodCount) / remainCount) || 1
+    for (var i = 0; i < remainCount; i++) {
+      var move = options.moves[goodCount + i * interval]
+      if (move) searchMoves.push(move)
+    }
+  } else {
+    searchMoves = options.moves.slice(0, searchCount)
+  }
+  return searchMoves
 }
 
 function sortByScoreDesc (a, b) {
