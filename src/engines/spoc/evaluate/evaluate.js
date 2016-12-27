@@ -37,26 +37,27 @@ function predictiveEval (options) {
     var moveScore = move.predictiveEval || move.staticEval
     var relativeScore = moveScore.absScore / (options.context.depth || 1)
     // TODO: generalize the opponent trap aversion
-    if (options.context.depth === 3 && move.verboseMove.captured && move.staticEval.absScore > options.context.currentEval.absScore) {
-      var move = options.move
-      var moves = []
-      while (move) {
-        moves.unshift(move)
-        move = move.prevMove
-      }
-
-//      console.log('moves: ' + moves.map(m => m.simpleMove).join('-'))
-      var opponentGain = staticChange(moves[1], moves[0]) * -1
-      var opponentLoss = staticChange(moves[2], moves[1])
-      var trapPayoff = opponentLoss - opponentGain
-//      console.log('loss: ' + opponentGain + ' gain: ' + opponentLoss + ' payoff ' + trapPayoff)
-      var opponentTrapAversion = 0
-      if (trapPayoff > 0) {
-        var opponentTrapAversion = trapPayoff * (1 - options.context.tradeUpOdds)
-        relativeScore -= opponentTrapAversion / options.context.depth
-        console.log('adjust for opponentTrapAversion: ' + opponentTrapAversion / options.context.depth +  ' for oppGain: ' + opponentGain + ' oppLoss: ' + opponentLoss)
-      }
-    }
+//    if (options.context.depth === 3 && move.verboseMove.captured && move.staticEval.absScore > options.context.currentEval.absScore) {
+//      var move = options.move
+//      var moves = []
+//      while (move) {
+//        moves.unshift(move)
+//        move = move.prevMove
+//      }
+//
+////      console.log('moves: ' + moves.map(m => m.simpleMove).join('-'))
+//      var opponentGain = staticChange(moves[1], moves[0]) * -1
+//      var opponentLoss = staticChange(moves[2], moves[1])
+//      var trapPayoff = opponentLoss - opponentGain
+////      console.log('loss: ' + opponentGain + ' gain: ' + opponentLoss + ' payoff ' + trapPayoff)
+//      var opponentTrapAversion = 0
+//      if (opponentGain > 0 && trapPayoff > 0) {
+//        var opponentTrapAversion = trapPayoff * (1 - options.context.tradeUpOdds)
+//        var adjustment = opponentTrapAversion / options.context.depth + opponentTrapAversion / (options.context.depth + 1)
+//        relativeScore -= adjustment
+//        console.log('adjust for opponentTrapAversion: ' + adjustment +  ' for oppGain: ' + opponentGain + ' oppLoss: ' + opponentLoss)
+//      }
+//    }
     return score + relativeScore
   }, 0) / (options.nextMoves.length || 1)
 

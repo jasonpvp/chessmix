@@ -59,7 +59,7 @@ function scoreMoves (options) {
   moves = search.sortMoves({context: context, moves: moves})
 
   if (context.depth === 0) {
-    console.log('top moves: %o', moves.map(m =>  m.simpleMove).join(', '))
+    console.log('top moves: %o', moves.map(m =>  m.simpleMove + ':' + m.staticEval.score).join(', '))
   }
 //  console.log('Score path: ' + options.context.path + ' with ' + moves.length + ' moves')
   if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: moves})) {

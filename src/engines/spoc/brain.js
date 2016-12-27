@@ -19,7 +19,9 @@ module.exports = function () {
     },
     getNextMove: function (options) {
       var game = options.game
+      var prevEval = game.currentEval
       game.bestNextMove = null
+      game.searchStats.predictions = 0
       game.bestPrediction = {
         path: ''
       }
@@ -33,9 +35,12 @@ module.exports = function () {
         game.prevMove = bestMove
 
         return {
+          gameId: game.gameId,
           move: responseMove(bestMove),
           prediction: game.bestPrediction,
-          searchStats: game.searchStats
+          searchStats: game.searchStats,
+          prevEval: prevEval,
+          currentEval: game.currentEval
         }
       })
     }
@@ -51,15 +56,17 @@ module.exports = function () {
     }, {})
   }
 
-  // TODO: find by game id
   function findGame (options) {
-    var turn = (options.moves && options.moves[0].length > 0) ? 1 : 0
-    return games[Object.keys(games)[turn]] || new Game(options)
+    console.log('look for game ' + options.gameId + ' for player ' + options.player)
+    var game = options.gameId && games[options.gameId]
+    if (game) console.log('Found in-progress game: ' + options.gameId + ' for player: ' + game.player)
+    return game || new Game(options)
   }
 
   function Game (options) {
     var game = {
-      player: options.player || (options.moves && options.moves[0].length > 0) ? -1 : 1,
+      gameId: options.gameId,
+      player: options.player,
       board: getBoard(options),
       scoreMoves: scoreMoves,
       search: search,
@@ -69,17 +76,17 @@ module.exports = function () {
         path: ''
       },
       currentEval: {
-        staticEval: {score: 0},
-        predictiveEval: {score: 0}
+        staticEval: {absScore: Number.NEGATIVE_INFINITY},
+        predictiveEval: {absScore: Number.NEGATIVE_INFINITY}
       },
       searchStats: {
-        id: Math.floor(Math.random() * 100),
+        predictions: 0,
         currentDepth: 0,
         levels: []
       }
     }
     game.evaluate = new Evaluate(evalConfig({game: game})),
-    games[game.board.fen()] = game
+    games[options.gameId] = game
     console.log('Playing as ' + game.player)
     return game
   }
@@ -106,6 +113,9 @@ module.exports = function () {
     var bucket = Math.floor(evaluation.score)
     stat.hist[type][bucket] = stat.hist[type][bucket] || 0
     stat.hist[type][bucket]++
+    if (type === 'predictive' && depth === 0) {
+      game.searchStats.predictions++
+    }
   }
 
   function evalConfig (options) {
@@ -157,7 +167,7 @@ module.exports = function () {
 
   function predictiveBeatsOtherMove (predictiveEval, otherMove) {
     if (!otherMove) return true
-    var otherEval = otherMove.predictiveEval || otherMove.staticEval || {}
+    var otherEval = otherMove.predictiveEval || otherMove.staticEval
     var otherScore = (otherEval.absScore !== null) ? otherEval.absScore : Number.NEGATIVE_INFINITY
     return predictiveEval.absScore > otherEval.absScore
   }
@@ -208,11 +218,11 @@ module.exports = function () {
   }
 
   function searchMoves (options) {
-  console.log('search moves')
-      var game = options.game
+    console.log('search moves')
+    var game = options.game
 
     return new Promise(function (resolve, reject) {
-      var timeLimit = (options.timeLimit || 20) * 1000
+      var timeLimit = (options.timeLimit || 30) * 1000
       var startTime = (new Date()).getTime()
       var board = options.game.board
 
@@ -220,11 +230,13 @@ module.exports = function () {
         game: options.game,
         turn: turn({board: options.game.board}),
         maxDepth: 3,
-        tradeUpOdds: 0.1,
+        tradeUpOdds: 0.5,
         startDepth: options.moves ? options.moves.length - 1 : 0,
         haltSearch: function () {
-          if (((new Date()).getTime() - startTime) > timeLimit) {
-            console.log('Search timed out')
+          var outOfTime = ((new Date()).getTime() - startTime) > timeLimit
+          var goodEnough = game.searchStats.predictions > 3 && predictiveBeatsOtherMove(game.bestNextMove.predictiveEval || {}, game.currentEval)
+          if (outOfTime || goodEnough) {
+            console.log(outOfTime ? 'Search timed out' : 'Search found good enough move')
             resolve()
             return true
           }
@@ -237,7 +249,7 @@ module.exports = function () {
       }
       context.currentEval = game.evaluate.staticEval({context: context})
 
-  console.log('prev moves: ' + JSON.stringify(options.moves))
+      console.log('prev moves: ' + JSON.stringify(options.moves))
       options.game.searchStats.currentDepth = context.startDepth
 
       console.log('scoring moves from depth ' + context.startDepth + '...')

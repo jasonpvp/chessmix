@@ -27,7 +27,8 @@ const initialState = {
   whitePlayer: human(),
   blackPlayer: human(),
   searchStats: null,
-  prediction: ''
+  prediction: '',
+  gameId: Math.floor(Math.random() * 1000000)
 }
 const playerOptions = {
   human: human(),
@@ -150,7 +151,8 @@ export class App extends React.Component {
       ...initialState,
       whitePlayer: this.state.whitePlayer,
       blackPlayer: this.state.blackPlayer,
-      autoRestart: this.state.autoRestart
+      autoRestart: this.state.autoRestart,
+      gameId: Math.floor(Math.random() * 1000000)
     }
     this.setState(newState)
     this.scheduleMove()
@@ -159,10 +161,10 @@ export class App extends React.Component {
   makeNextMove () {
     if (this.board.turn() === 'b') {
       console.log('Blacks turn')
-      this.state.blackPlayer.getMove({moves: this.state.moves}).then(this.makeMove)
+      this.state.blackPlayer.getMove({moves: this.state.moves, player: -1, gameId: this.state.gameId}).then(this.makeMove)
     } else {
       console.log('Whites turn')
-      this.state.whitePlayer.getMove({moves: this.state.moves}).then(this.makeMove)
+      this.state.whitePlayer.getMove({moves: this.state.moves, player: 1, gameId: this.state.gameId}).then(this.makeMove)
     }
   }
 

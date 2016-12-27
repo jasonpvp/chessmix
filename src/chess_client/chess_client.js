@@ -38,7 +38,7 @@ function getMove (options) {
 
 function moveUrl (options) {
   const moves = options.moves.join(' ')
-  return `${serverBaseUrl}/getMove?engine=${options.engine}&moves=${moves}&movetime=0`
+  return `${serverBaseUrl}/getMove?engine=${options.engine}&moves=${moves}&movetime=0&player=${options.player}&gameId=${options.gameId}`
 }
 
 function moveToOptions (move = '') {

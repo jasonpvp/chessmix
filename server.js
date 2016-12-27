@@ -25,7 +25,8 @@ app.get('/getMove', function (req, res) {
   } else if (engines[req.query.engine]) {
     var options = req.query
     var moves = options.moves.split(' ')
-    engines[options.engine].getNextMove({fen: options.fen, moves: moves}).then(function (result) {
+    console.log(JSON.stringify(options))
+    engines[options.engine].getNextMove({fen: options.fen, moves: moves, player: options.player, gameId: options.gameId}).then(function (result) {
       result.allMoves = moves
       res.send(result)
     })
