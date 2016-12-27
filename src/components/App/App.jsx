@@ -84,26 +84,32 @@ export class App extends React.Component {
   }
 
   makeMove = (options) => {
-    var move = options.move.verboseMove
-    if (!(move.from && move.from.length && move.to && move.to.length)) return
-
-    let piece
+    var move = options.move.simpleMove
+    var piece
+    const verboseMove = options.move.verboseMove || {}
     try {
-      piece = move.piece || this.board.get(moves.from).type
+      if (!move) {
+        if (!(verboseMove.from && verboseMove.from.length && verboseMove.to && verboseMove.to.length)) return
+        piece = verboseMove.piece || this.board.get(verboseMove.from).type
+        if (this.needsPromotion({piece: piece, to: verboseMove.to}) && !verboseMove.promotion) {
+          verboseMove.promotion = this.promptPromotion()
+        }
+        move = verboseMove.from + verboseMove.to + (verboseMove.promotion || '')
+      }
+
+      if (!piece) {
+        var from = move.slice(0,2)
+        piece = verboseMove.piece || this.board.get(from).type
+      }
     } catch(err) {
       // An invalid move can occur on new game when switching opponents since computer opponent responses might be pending
       console.log(this.board.ascii())
-      console.error('Invalid move options: %o', JSON.stringify(move))
+      console.error('Invalid move options: %o', JSON.stringify(options))
       return
     }
-    console.log('Move) piece: %s, %o', piece, JSON.stringify(move))
+    console.log('Move) piece: %s %s', piece, move)
 
-    if (this.needsPromotion({piece: piece, to: move.to}) && !move.promotion) {
-      move.promotion = this.promptPromotion()
-    }
-    const simpleMove = move.from + move.to + (move.promotion || '')
-
-    this.board.move(move)
+    this.board.move(move, {sloppy: true})
 
     if (this.board.fen() === this.state.fen) {
       this.setState({lastMove: 'Invalid move', msg: ''})
@@ -117,8 +123,8 @@ export class App extends React.Component {
 
       let newState = {
         fen: this.board.fen(),
-        lastMove: `${piece}${move.from}${move.to}${move.promotion || ''}`,
-        moves: [...this.state.moves, simpleMove],
+        lastMove: `${piece} ${move}`,
+        moves: [...this.state.moves, move],
         msg
       }
       if (options.searchStats) newState.searchStats = options.searchStats

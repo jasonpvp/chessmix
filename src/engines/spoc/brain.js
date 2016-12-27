@@ -42,12 +42,13 @@ module.exports = function () {
 
 // TODO: find by game id
 function findGame (options) {
-  return games[Object.keys(games)[0]] || new Game(options)
+  var turn = (options.moves && options.moves[0].length > 0) ? 1 : 0
+  return games[Object.keys(games)[turn]] || new Game(options)
 }
 
 function Game (options) {
   var game = {
-    player: options.player || -1,
+    player: (options.moves && options.moves[0].length > 0) ? -1 : 1,
     board: getBoard(options),
     scoreMoves: scoreMoves,
     search: search,
@@ -68,6 +69,7 @@ function Game (options) {
   }
   game.evaluate = new Evaluate(evalConfig({game: game})),
   games[game.board.fen()] = game
+  console.log('Playing as ' + game.player)
   return game
 }
 

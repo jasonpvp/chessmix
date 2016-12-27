@@ -84,7 +84,9 @@ function processMessage (line) {
   } else if (line.indexOf("bestmove") > -1) {
     match = line.match(/bestmove\s+(\S+)/)
     var output = {
-      nextMove: match ? match[1] : 'none',
+      move: {
+        simpleMove: match ? match[1] : 'none',
+      },
       duration: duration,
       options: options,
       lastEvaluation: parseFloat(lastEvaluation)
