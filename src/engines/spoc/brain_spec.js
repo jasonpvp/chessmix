@@ -52,28 +52,29 @@ function playerLoop (player) {
         setupBoard({
           board: game.board,
           player: player,
-          moves: ['e7e6', 'h2h3', 'f8a3'],
-          whiteLead: 'c2c3'
+          whiteLead: 'c2c3',
+          moves: ['e7e6', 'h2h3', 'f8a3']
         })
 
         return brain.getNextMove({game: game, timeLimit: 9, player}).then((data) => {
-          console.log('Checking cell ' + cellForPlayer('a3', player))
           const piece = game.board.get(cellForPlayer('a3', player))
           expect(piece).to.not.eql({type: 'b', color: opponentColor}, player + ' should have taken piece')
         })
       })
 
-//      it('does not predict that opponent will fall for stupid tricks', () => {
-//        game = brain.getGame({player: player, gameId: gameId})
-//        // offer white a pawn in exchange for its queen
-//        game.board.load(setFen('Q7/p7/r7/8/k7/8/8/K7 b KQkq - 0 50', player))
-//
-//        return brain.getNextMove({game: game, timeLimit: 9, player}).then((data) => {
-//          console.log('MOVE: %o', data.prediction.path)
-//          // Black should not predict that white will give up its queen
-//          expect(data.prediction.path.slice(0, 4)).to.not.eql('a8a7', player + ' should not have expected opponent to fall for stupid trap\n' + game.board.ascii())
-//        })
-//      })
+      it('does not predict that opponent will fall for stupid tricks', () => {
+        game = brain.getGame({player: player, gameId: gameId})
+        setupBoard({
+          board: game.board,
+          player: player,
+          fen: 'q1k5/p1p5/R7/K1P5/8/8/8/8 w KQkq - 0 50'
+        })
+
+        return brain.getNextMove({game: game, timeLimit: 9, player}).then((data) => {
+          const piece = game.board.get(cellForPlayer('c6', player))
+          expect(piece).to.not.eql({type: 'p', color: playerColor}, player + ' should have taken piece')
+        })
+      })
     })
   })
 }

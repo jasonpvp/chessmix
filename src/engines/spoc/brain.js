@@ -29,6 +29,7 @@ module.exports = function () {
       }
       var prevEval = game.currentEval
       game.bestNextMove = null
+      game.neutralNextMove = null
       game.searchStats.predictions = 0
       game.bestPrediction = {
         path: ''
@@ -80,12 +81,13 @@ module.exports = function () {
       search: search,
       scoredMoves: {},
       bestNextMove: null,
+      neutralNextMove: null,
       bestPrediction: {
         path: ''
       },
       currentEval: {
-        staticEval: {absScore: Number.NEGATIVE_INFINITY},
-        predictiveEval: {absScore: Number.NEGATIVE_INFINITY}
+        staticEval: {absScore: 0},
+        predictiveEval: {absScore: 0}
       },
       searchStats: {
         predictions: 0,
@@ -126,6 +128,13 @@ module.exports = function () {
     }
   }
 
+  function newMoveMoreNeutral (newEval, currentMove, currentEval) {
+    if (!currentMove) return true
+    var newDiff = Math.abs(currentEval.staticEval.absScore - newEval.absScore)
+    var currentDiff = Math.abs(currentEval.staticEval.absScore - currentMove.staticEval.absScore)
+    return newDiff < currentDiff
+  }
+
   function evalConfig (options) {
     var lastPath = null
 
@@ -147,6 +156,11 @@ module.exports = function () {
             game.bestNextMove = newMove
           }
         }
+
+        if (newMoveMoreNeutral(evaluation, game.neutralNextMove, game.currentEval)) {
+          console.log(newMove.simpleMove + ' ' + evaluation.absScore + ' is more neutral')
+          game.neutralNextMove = newMove
+        }
       },
       onPredictiveEval: function (evaluation, options) {
         if (isNaN(evaluation.score)) return
@@ -159,7 +173,13 @@ module.exports = function () {
         }
 
         if (options.context.depth === 0) {
-          if (predictiveBeatsOtherMove(evaluation, game.bestNextMove)) {
+if (newMove.simpleMove === 'f6e4') {
+  console.log(lastPath)
+  console.log('same: ' + (newMove === game.bestNextMove) + ', diff: ' + evaluation.absScore + ' ' +  game.currentEval.staticEval.absScore)
+}
+          if (newMove === game.bestNextMove && evaluation.absScore < game.currentEval.staticEval.absScore) {
+            game.bestNextMove = game.neutralNextMove
+          } else if (predictiveBeatsOtherMove(evaluation, game.bestNextMove)) {
             console.log('predicted score ' + options.move.simpleMove + ' = ' + evaluation.absScore + ' at depth ' + options.context.depth)
             newMoveLog(game.bestNextMove, newMove, 'predictive', evaluation, lastPath)
             game.bestNextMove = newMove
@@ -177,6 +197,7 @@ module.exports = function () {
     if (!otherMove) return true
     var otherEval = otherMove.predictiveEval || otherMove.staticEval
     var otherScore = (otherEval.absScore !== null) ? otherEval.absScore : Number.NEGATIVE_INFINITY
+    
     return predictiveEval.absScore > otherEval.absScore
   }
 
@@ -239,7 +260,7 @@ module.exports = function () {
         game: options.game,
         turn: turn({board: options.game.board}),
         maxDepth: 3,
-        tradeUpOdds: 0.05,
+        tradeUpOdds: 0.005,
         startDepth: options.moves ? options.moves.length - 1 : 0,
         haltSearch: function () {
           var outOfTime = ((new Date()).getTime() - startTime) > timeLimit

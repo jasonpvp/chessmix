@@ -35,7 +35,7 @@ function staticChange (move, prevMove) {
 function predictiveEval (options) {
   var absScore = options.nextMoves.reduce(function (score, move) {
     var moveScore = move.predictiveEval || move.staticEval
-    var relativeScore = moveScore.absScore / (options.context.depth || 1)
+    var relativeScore = moveScore.absScore / ((options.context.depth + 1) || 1)
     var ttlChange = 0//moveScore.absScore - options.context.currentEval.absScore
     if (options.context.depth === 3 && ttlChange < 0) {
       moveScore *= 10
