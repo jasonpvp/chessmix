@@ -30,17 +30,22 @@ function playerLoop (player) {
     describe('getNextMove', function () {
       this.timeout(10000)
 
-//      it('takes the best piece when its a good move', () => {
-//        game = brain.getGame({player: player, gameId: gameId})
-//        // give black a choice between taking a queen or a pawn
-//        game.board.load(setFen('Q7/r7/P7/8/k7/8/8/K7 b KQkq - 0 50', player))
-//
-//        return brain.getNextMove({game: game, timeLimit: 9, player: player}).then((data) => {
-//          console.log('MOVE: %o', data)
-//
-//          expect(data.move.simpleMove).to.eql('a7a8', player + ' should have taken piece\n' + game.board.ascii())
-//        })
-//      })
+      it('takes the best piece when its an obvious choice', () => {
+        game = brain.getGame({player: player, gameId: gameId})
+        setupBoard({
+          board: game.board,
+          fen: 'q7/R7/K7/8/k7/8/8/8 w KQkq - 0 50',
+          player: player
+        })
+
+        return brain.getNextMove({game: game, timeLimit: 9, player: player}).then((data) => {
+          let piece = game.board.get(cellForPlayer('a8', player))
+          expect(piece).to.not.eql({type: 'q', color: opponentColor}, player + ' should have taken piece')
+
+          piece = game.board.get(cellForPlayer('a7', player))
+          expect(piece).to.eql(null, player + ' should have taken piece with its rook')
+        })
+      })
 
       it('takes a piece when its the best choice', () => {
         game = brain.getGame({player: player, gameId: gameId})
@@ -77,13 +82,22 @@ function playerLoop (player) {
 
 function setupBoard(options) {
   if (options.fen) {
-    options.board.load(fen)
     if (options.player === -1) {
+      var parts = options.fen.split(' ')
+      parts[1] = (parts[1] === 'w') ? 'b' : 'w'
+      parts[4] = 1
+      options.fen = parts.join(' ')
+    }
+    console.log('load fen: ' + options.fen)
+    options.board.load(options.fen)
+
+    if (options.player === -1) {
+      console.log('Invert board')
       invertBoard(options)
     }
   }
   if (options.moves) {
-    if (options.player === 1) {
+    if (options.player === 1 && options.whiteLead) {
       console.log('Move: ' + options.whiteLead)
       options.board.move(options.whiteLead, {sloppy: true})
     }
@@ -93,6 +107,7 @@ function setupBoard(options) {
       options.board.move(move, {sloppy: true})
     })
   }
+  console.log(options.board.turn() + ' to move')
 }
 
 function invertBoard (options) {
@@ -100,11 +115,18 @@ function invertBoard (options) {
   for (var i = 1; i < 9; i++) {
     for (var j = 1; j < 9; j++) {
       var cell = String.fromCharCode(96 + i) + j
-      cells[cell] = board.get(cell)
+      cells[cell] = options.board.get(cell)
     }
   }
+
+  options.board.load('8/8/8/8/8/8/8/8 b KQkq - 0 50')
   Object.keys(cells).forEach(cell => {
-    board.put(invertPiece(cells[cell]), cell)
+    var piece = invertPiece(cells[cell])
+    if (piece) {
+      options.board.put(piece, invertCell(cell))
+    } else {
+      options.board.remove(invertCell(cell))
+    }
   })
 }
 
@@ -135,9 +157,13 @@ function invertCell (cell) {
 }
 
 function invertPiece (piece) {
+  if (!piece) {
+    return piece
+  }
   if (piece.color === 'b') {
     piece.color = 'w'
   } else {
     piece.color = 'b'
   }
+  return piece
 }
