@@ -13,12 +13,20 @@ module.exports = function () {
   var games = {}
   return {
     getGame: function (options) {
+      if (!options.player) {
+        console.log('Player option require')
+        return null
+      }
       var game = findGame(options)
       game.board = applyMoves(options)
       return game
     },
     getNextMove: function (options) {
       var game = options.game
+      if (!game) {
+        console.log('Game option require')
+        return null
+      }
       var prevEval = game.currentEval
       game.bestNextMove = null
       game.searchStats.predictions = 0
@@ -66,7 +74,7 @@ module.exports = function () {
   function Game (options) {
     var game = {
       gameId: options.gameId,
-      player: options.player,
+      player: parseInt(options.player, 10),
       board: getBoard(options),
       scoreMoves: scoreMoves,
       search: search,
@@ -153,7 +161,7 @@ module.exports = function () {
         if (options.context.depth === 0) {
           if (predictiveBeatsOtherMove(evaluation, game.bestNextMove)) {
             console.log('predicted score ' + options.move.simpleMove + ' = ' + evaluation.absScore + ' at depth ' + options.context.depth)
-            newMoveLog(game.bestNextMove, newMove, 'predictive', evaluation)
+            newMoveLog(game.bestNextMove, newMove, 'predictive', evaluation, lastPath)
             game.bestNextMove = newMove
             game.bestPrediction = {
               path: lastPath.split(':').slice(1).join(', ')
@@ -172,7 +180,8 @@ module.exports = function () {
     return predictiveEval.absScore > otherEval.absScore
   }
 
-  function newMoveLog (oldMove, newMove, type, evaluation) {
+  function newMoveLog (oldMove, newMove, type, evaluation, lastPath) {
+    console.log(lastPath)
     console.log('!!! ' + newMove.simpleMove + ' ' + type + ' ' + evaluation.absScore + ' beats ' + moveLog(oldMove))
   }
 
@@ -230,7 +239,7 @@ module.exports = function () {
         game: options.game,
         turn: turn({board: options.game.board}),
         maxDepth: 3,
-        tradeUpOdds: 0.5,
+        tradeUpOdds: 0.05,
         startDepth: options.moves ? options.moves.length - 1 : 0,
         haltSearch: function () {
           var outOfTime = ((new Date()).getTime() - startTime) > timeLimit

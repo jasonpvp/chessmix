@@ -28,7 +28,10 @@ function sortMoves (options) {
   if (searchCount === moveCount) {
     return options.moves
   }
-
+//var m = options.moves.map(function (m) { return m.simpleMove })
+//if (m.indexOf('h4g5') >= 0 || m.indexOf('d8g5') >= 0) {
+//  console.log('PLAYER: ' + options.context.game.player + ' TURN: ' + options.context.turn + ' ' + (options.context.turn === options.context.game.player) + ' ' + options.moves.map(function (m) { return m.simpleMove + '(' + m.staticEval.absScore + ')' }).join(', '))
+//}
   var searchMoves
   if (searchCount > goodCount) {
     searchMoves = options.moves.slice(0,goodCount)
@@ -46,14 +49,14 @@ function sortMoves (options) {
 }
 
 function sortByScoreDesc (a, b) {
-  if (a.staticEval.absScore < b.staticEval.absScore) return -1
-  if (a.staticEval.absScore > b.staticEval.absScore) return 1
+  if (a.staticEval.absScore < b.staticEval.absScore) return 1
+  if (a.staticEval.absScore > b.staticEval.absScore) return -1
   return 0
 }
 
 function sortByScoreAsc (a, b) {
-  if (a.staticEval.absScore < b.staticEval.absScore) return 1
-  if (a.staticEval.absScore > b.staticEval.absScore) return -1
+  if (a.staticEval.absScore < b.staticEval.absScore) return -1
+  if (a.staticEval.absScore > b.staticEval.absScore) return 1
   return 0
 }
 

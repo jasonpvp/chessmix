@@ -60,8 +60,11 @@ function scoreMoves (options) {
 
   if (context.depth === 0) {
     console.log('top moves: %o', moves.map(m =>  m.simpleMove + ':' + m.staticEval.score).join(', '))
+//  } else if (context.depth < 3) {
+//    var isNum = parseInt(options.context.game.player) === options.context.game.player
+//    console.log('Player: ' + isNum + ' ' + options.context.game.player + ' Score path: ' + options.context.path + ' with ' + moves.length + ' moves')
   }
-//  console.log('Score path: ' + options.context.path + ' with ' + moves.length + ' moves')
+
   if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: moves})) {
     return moves
   }
