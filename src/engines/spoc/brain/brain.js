@@ -15,19 +15,7 @@ Promise.onPossiblyUnhandledRejection(function(error) {
 })
 
 module.exports = function () {
-  var games = {}
-
   return {
-    getGame: function (options) {
-      if (!options.player) {
-        logger.logError('Player option require')
-        return null
-      }
-      var game = findGame(options)
-      game.board = applyMoves(options)
-      return game
-    },
-
     getNextMove: function (options) {
       var game = options.game
       if (!game) {
