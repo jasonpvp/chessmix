@@ -81,7 +81,6 @@ module.exports = function () {
       board: getBoard(options),
       scoreMoves: scoreMoves,
       search: search,
-      scoredMoves: {},
       moveSelector: null,
       currentEval: {
         staticEval: {absScore: 0},
@@ -213,5 +212,3 @@ module.exports = function () {
     }
   }
 }
-
-
