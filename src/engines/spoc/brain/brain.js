@@ -4,6 +4,7 @@ var Promise = require('bluebird')
 var scoreMoves = require('../score_moves').scoreMoves
 var Evaluate = require('../evaluate')
 var search = require('../search')
+var Stats = require('../stats')
 
 Promise.onPossiblyUnhandledRejection(function(error) {
   throw error
@@ -30,12 +31,11 @@ module.exports = function () {
       var prevEval = game.currentEval
       game.bestNextMove = null
       game.neutralNextMove = null
-      game.searchStats.predictions = 0
+      game.searchStats.clearPredictions()
       game.bestPrediction = {
         path: ''
       }
       console.log(options.game.board.ascii())
-      console.log('stats: ' + JSON.stringify(game.searchStats))
 
       return searchMoves(options).then(function () {
         var bestMove = game.bestNextMove || {}
@@ -47,7 +47,7 @@ module.exports = function () {
           gameId: game.gameId,
           move: responseMove(bestMove),
           prediction: game.bestPrediction,
-          searchStats: game.searchStats,
+          searchStats: game.searchStats.serialize(),
           prevEval: prevEval,
           currentEval: game.currentEval
         }
@@ -89,44 +89,15 @@ module.exports = function () {
         staticEval: {absScore: 0},
         predictiveEval: {absScore: 0}
       },
-      searchStats: {
-        predictions: 0,
-        currentDepth: 0,
-        levels: []
-      }
+      searchStats: new Stats()
     }
+
     game.evaluate = new Evaluate(evalConfig({game: game})),
     games[options.gameId] = game
     console.log('Playing as ' + game.player)
     return game
   }
 
-  function addStats (type, evaluation, options) {
-    var context = options.context
-    var game = context.game
-    var depth = context.startDepth + context.depth
-    if (!game.searchStats.levels[depth]) {
-      game.searchStats.levels[depth] = {
-        depth: depth,
-        counts: {
-          static: 0,
-          predictive: 0
-        },
-        hist: {
-          static: {},
-          predictive: {}
-        }
-      }
-    }
-    var stat = game.searchStats.levels[depth]
-    stat.counts[type]++
-    var bucket = Math.floor(evaluation.score)
-    stat.hist[type][bucket] = stat.hist[type][bucket] || 0
-    stat.hist[type][bucket]++
-    if (type === 'predictive' && depth === 0) {
-      game.searchStats.predictions++
-    }
-  }
 
   function newMoveMoreNeutral (newEval, currentMove, currentEval) {
     if (!currentMove) return true
@@ -141,11 +112,16 @@ module.exports = function () {
     return {
       onStaticEval: function (evaluation, options) {
         if (isNaN(evaluation.score) || !options.move) return
-        addStats('static', evaluation, options)
-        if (options.context.depth > 0) return
         var game = options.context.game
 
-  console.log('static eval ' + options.move.simpleMove + ' = ' + evaluation.absScore)
+        game.searchStats.addStaticStat({
+          depth: options.context.startDepth + options.context.depth,
+          score: evaluation.score
+        })
+
+        if (options.context.depth > 0) return
+
+        console.log('static eval ' + options.move.simpleMove + ' = ' + evaluation.absScore)
         var newMove = options.move
         if (!game.bestNextMove) {
           newMoveLog(game.bestNextMove, newMove, 'static', evaluation)
@@ -164,8 +140,13 @@ module.exports = function () {
       },
       onPredictiveEval: function (evaluation, options) {
         if (isNaN(evaluation.score)) return
-        addStats('predictive', evaluation, options)
         var game = options.context.game
+
+        game.searchStats.addPredictiveStat({
+          depth: options.context.startDepth + options.context.depth,
+          score: evaluation.score
+        })
+
         var newMove = options.move
         var path = options.context.path + options.move.simpleMove + '(' + evaluation.score.toFixed(2) + ')'
         if (!lastPath || path.indexOf(lastPath) === 0) {
@@ -264,7 +245,7 @@ if (newMove.simpleMove === 'f6e4') {
         startDepth: options.moves ? options.moves.length - 1 : 0,
         haltSearch: function () {
           var outOfTime = ((new Date()).getTime() - startTime) > timeLimit
-          var goodEnough = game.searchStats.predictions > 3 && predictiveBeatsOtherMove(game.bestNextMove.predictiveEval || {}, game.currentEval)
+          var goodEnough = game.searchStats.predictionCount > 3 && predictiveBeatsOtherMove(game.bestNextMove.predictiveEval || {}, game.currentEval)
           if (outOfTime || goodEnough) {
             console.log(outOfTime ? 'Search timed out' : 'Search found good enough move')
             resolve()
@@ -280,7 +261,7 @@ if (newMove.simpleMove === 'f6e4') {
       context.currentEval = game.evaluate.staticEval({context: context})
 
       console.log('prev moves: ' + JSON.stringify(options.moves))
-      options.game.searchStats.currentDepth = context.startDepth
+      options.game.searchStats.setDepth({depth: context.startDepth})
 
       console.log('scoring moves from depth ' + context.startDepth + '...')
       // move scoring continues until haltSearch above returns true
