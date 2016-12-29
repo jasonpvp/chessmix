@@ -1,9 +1,9 @@
 var Chess = require('chess.js')
 Chess = Chess.Chess || Chess
 var Promise = require('bluebird')
-var scoreMoves = require('./score_moves').scoreMoves
-var Evaluate = require('./evaluate')
-var search = require('./search')
+var scoreMoves = require('../score_moves').scoreMoves
+var Evaluate = require('../evaluate')
+var search = require('../search')
 
 Promise.onPossiblyUnhandledRejection(function(error) {
   throw error
