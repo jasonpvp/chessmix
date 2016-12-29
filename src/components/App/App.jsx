@@ -6,7 +6,7 @@ import { connect } from 'react-redux'
 import { actions } from '../../state/app_actions'
 import Chessdiagram from 'react-chessdiagram'
 import Chess from 'chess.js'
-import { Network } from '../Network'
+import { SearchGraph } from '../SearchGraph'
 require('./App.scss')
 
 import { ChessClient } from '../../chess_client'
@@ -25,7 +25,10 @@ const initialState = {
   autoRestart: false,
   moves: [],
   whitePlayer: human(),
-  blackPlayer: chessClient.Chesster
+  blackPlayer: human(),
+  searchStats: null,
+  prediction: '',
+  gameId: Math.floor(Math.random() * 1000000)
 }
 const playerOptions = {
   human: human(),
@@ -57,10 +60,14 @@ export class App extends React.Component {
     }
 
     this.makeMove({
-      piece,
-      from,
-      to,
-      promotion
+      move: {
+        verboseMove: {
+          piece,
+          from,
+          to,
+          promotion
+        }
+      }
     })
   }
 
@@ -78,23 +85,30 @@ export class App extends React.Component {
   }
 
   makeMove = (options) => {
-    if (!(options.from && options.from.length && options.to && options.to.length)) return
-
-    let piece
+    var move = options.move.simpleMove
+    var piece
+    const verboseMove = options.move.verboseMove || {}
     try {
-      piece = options.piece || this.board.get(options.from).type
+      if (!move) {
+        if (!(verboseMove.from && verboseMove.from.length && verboseMove.to && verboseMove.to.length)) return
+        piece = verboseMove.piece || this.board.get(verboseMove.from).type
+        if (this.needsPromotion({piece: piece, to: verboseMove.to}) && !verboseMove.promotion) {
+          verboseMove.promotion = this.promptPromotion()
+        }
+        move = verboseMove.from + verboseMove.to + (verboseMove.promotion || '')
+      }
+
+      if (!piece) {
+        var from = move.slice(0,2)
+        piece = verboseMove.piece || this.board.get(from).type
+      }
     } catch(err) {
       // An invalid move can occur on new game when switching opponents since computer opponent responses might be pending
       console.log(this.board.ascii())
       console.error('Invalid move options: %o', JSON.stringify(options))
       return
     }
-    console.log('Move) piece: %s, %o', piece, JSON.stringify(options))
-
-    if (this.needsPromotion({piece: piece, to: options.to}) && !options.promotion) {
-      options.promotion = this.promptPromotion()
-    }
-    const move = options.from + options.to + (options.promotion || '')
+    console.log('Move) piece: %s %s', piece, move)
 
     this.board.move(move, {sloppy: true})
 
@@ -108,13 +122,15 @@ export class App extends React.Component {
         msg = 'Check!'
       }
 
-      this.setState({
+      let newState = {
         fen: this.board.fen(),
-        lastMove: `${piece}${options.from}${options.to}${options.promotion}`,
+        lastMove: `${piece} ${move}`,
         moves: [...this.state.moves, move],
         msg
-      })
-
+      }
+      if (options.searchStats) newState.searchStats = options.searchStats
+      if (options.prediction) newState.prediction = options.prediction
+      this.setState(newState)
       this.scheduleMove()
     }
   }
@@ -135,7 +151,8 @@ export class App extends React.Component {
       ...initialState,
       whitePlayer: this.state.whitePlayer,
       blackPlayer: this.state.blackPlayer,
-      autoRestart: this.state.autoRestart
+      autoRestart: this.state.autoRestart,
+      gameId: Math.floor(Math.random() * 1000000)
     }
     this.setState(newState)
     this.scheduleMove()
@@ -144,10 +161,10 @@ export class App extends React.Component {
   makeNextMove () {
     if (this.board.turn() === 'b') {
       console.log('Blacks turn')
-      this.state.blackPlayer.getMove({moves: this.state.moves}).then(this.makeMove)
+      this.state.blackPlayer.getMove({moves: this.state.moves, player: -1, gameId: this.state.gameId}).then(this.makeMove)
     } else {
       console.log('Whites turn')
-      this.state.whitePlayer.getMove({moves: this.state.moves}).then(this.makeMove)
+      this.state.whitePlayer.getMove({moves: this.state.moves, player: 1, gameId: this.state.gameId}).then(this.makeMove)
     }
   }
 
@@ -167,7 +184,7 @@ export class App extends React.Component {
 
   togglePlayer (player) {
     const p = this.state[player]
-    const opts = Object.keys(playerOptions).sort()
+    const opts = Object.keys(playerOptions).sort((a, b) => (a.order < b.order) ? -1 : (a.order > b.order) ? 1 : 0)
     let index = opts.indexOf(p.name) + 1
     if (index >= opts.length) {
       index = 0
@@ -188,7 +205,7 @@ export class App extends React.Component {
 
   render () {
     const { example } = this.props
-    const { lastMove, fen, msg, autoRestart, whitePlayer, blackPlayer } = this.state
+    const { lastMove, fen, msg, autoRestart, whitePlayer, blackPlayer, searchStats, prediction, moves } = this.state
     const appClasses = this.classNames()
     const headerClasses = this.classNames({descendant: 'header'})
     const titleClasses = this.classNames({descendant: 'title'})
@@ -216,6 +233,8 @@ export class App extends React.Component {
           <button onClick={this.toggleBlackPlayer}>Black: {blackPlayer.name}</button>
         </div>
         <Chessdiagram {...chessBoardProps} />
+        {searchStats && <SearchGraph currentDepth={moves.length - 1} searchStats={searchStats} />}
+        {prediction && <div style={{position: 'absolute', top: '425px', left: '875px'}}>Prediction: {prediction.path}</div>}
       </div>
     )
   }

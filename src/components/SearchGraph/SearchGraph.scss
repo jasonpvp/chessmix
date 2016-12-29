@@ -1,0 +1,62 @@
+@import "../BaseStyles/SuitMixins.scss";
+
+@include namespace('chesster') {
+  @include component('SearchGraph') {
+    position: absolute;
+    top: 200px;
+    left: 800px;
+    width: 410px;
+    @include  descendant('hLegend') {
+      position: absolute;
+      top: -20px;
+      width: 100%;
+      margin-left: 5px;
+      display: flex;
+      justify-content: space-between;
+    }
+    @include descendant('pane') {
+      position: absolute;
+      width: 100%;
+      height: 200px;
+      border: solid 1px #999;
+      padding: 5px;
+      border-radius: 5px;
+      background: #dddde7;
+      overflow: auto;
+    }
+    @include descendant('row') {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      padding: 2px;
+      margin-left: -2px;
+      border-radius: 2px;
+      @include state('current') {
+        background: #ffb;
+      }
+    }
+    @include descendant('center') {
+      position: absolute;
+      left: 210px;
+      top: 0;
+      width: 1px;
+      height: 210px;
+      background: #777;
+      opacity: 0.5;
+    }
+  }
+  @include component('HistHeatBar') {
+    width: 100%;
+    height: 10px;
+    position: relative;
+    @include descendant('bucket') {
+      width: 10px;
+      height: 10px;
+      position: absolute;
+      top: 0px;
+      border: inset 1px rgba(200,200,200,0.6);
+      border-radius: 2px;
+      box-sizing: border-box;
+    }
+  }
+}

@@ -1,12 +1,17 @@
 var express = require('express')
 var app = express()
-var Chesster = require('./src/server/chesster').Chesster
-var chesster = new Chesster()
+var Chesster = require('./src/engines/chesster').Chesster
+var Spoc = require('./src/engines/spoc').Spoc
+
+var engines = {
+  chesster: new Chesster(),
+  spoc: new Spoc()
+}
 
 var sys = require('sys')
 var exec = require('child_process').exec;
 var path = require('path')
-var trainer = path.join(__dirname, 'src', 'server', 'trainer.js')
+var trainer = path.join(__dirname, 'src', 'engines', 'trainer.js')
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*")
@@ -17,12 +22,22 @@ app.use(function(req, res, next) {
 app.get('/getMove', function (req, res) {
   if (req.query.engine === 'stockfish') {
     sendStockfishMove(req, res)
-  } else if (req.query.engine === 'chesster') {
-    var move = chesster.getNextMove({fen: req.query.fen, moves: req.query.moves.split(' ')})
-    console.log('Chesster move: ' + JSON.stringify(move))
-    res.send(move)
+  } else if (engines[req.query.engine]) {
+    var options = req.query
+    var moves = options.moves.split(' ')
+    console.log(JSON.stringify(options))
+    engines[options.engine].getNextMove({fen: options.fen, moves: moves, player: options.player, gameId: options.gameId}).then(function (result) {
+      result.allMoves = moves
+      res.send(result)
+    })
+  } else {
+    console.log('engine not supported')
+    res.status(500).send('Engine: ' + req.query.engine + ' not supported')
   }
 })
+
+function getEngineMove (options) {
+}
 
 function sendStockfishMove (req, res) {
   var cmd = ['node ' + trainer]
@@ -35,7 +50,8 @@ function sendStockfishMove (req, res) {
   exec(cmd.join(' '), (err, stdout, stderr) => {
     var lines = stdout.split(/\n/)
     console.log(lines)
-    var result = lines[lines.length - 2]
+    var result = JSON.parse(lines[lines.length - 2])
+    result.allMoves = req.query.moves.split(' ')
     console.log('send result: ' + result)
     res.send(result)
   })

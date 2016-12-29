@@ -2,12 +2,19 @@ const serverBaseUrl = 'http://localhost:3000'
 
 export function ChessClient () {
   return {
+    Spoc: {
+      name: 'Spoc',
+      order: 0,
+      getMove: (options) => getMove({...options, engine: 'spoc'})
+    },
     Stockfish: {
       name: 'Stockfish',
+      order: 2,
       getMove: (options) => getMove({...options, engine: 'stockfish'})
     },
     Chesster: {
       name: 'Chesster',
+      order: 1,
       getMove: (options) => getMove({...options, engine: 'chesster'})
     }
   }
@@ -21,14 +28,17 @@ function getMove (options) {
       return response.json()
     }).then(data => {
       console.log('%s response: %o', options.engine, data)
-      resolve(moveToOptions(data.nextMove))
+      if (!data.verboseMove && data.nextMove) {
+        data.verboseMove = moveToOptions(data.nextMove)
+      }
+      resolve(data)
     })
   })
 }
 
 function moveUrl (options) {
   const moves = options.moves.join(' ')
-  return `${serverBaseUrl}/getMove?engine=${options.engine}&moves=${moves}&movetime=0`
+  return `${serverBaseUrl}/getMove?engine=${options.engine}&moves=${moves}&movetime=0&player=${options.player}&gameId=${options.gameId}`
 }
 
 function moveToOptions (move = '') {

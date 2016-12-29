@@ -13,7 +13,7 @@ npm run dev
 Open your browser to localhost:8080 to play against a human, Stockfish (at the dummest level) or a horrible Neural net
 
 #### Adding an engine
-- Make a new directory under `/src/server` for your engine
+- Make a new directory under `/src/engines` for your engine
 - Require your engine in `server.js`
   - add a block to conditionally call your engine, pass in the list of moves so far
   - render an object from your engine, like: { nextMove: 'a2a3' }
