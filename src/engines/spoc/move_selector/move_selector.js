@@ -5,11 +5,14 @@ function MoveSelector (options) {
   var moveSelector = this
 
   Object.assign(this, {
-    bestMove: {},
+    reset: function () {
+      this.bestMove = {}
+    },
     log: function (msg) {
       logger.logInfo('MoveSelector: ' + msg)
     }
   })
+  this.reset()
 }
 
 MoveSelector.prototype.selectBetterMove = function (options) {

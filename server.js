@@ -1,7 +1,7 @@
 var express = require('express')
 var app = express()
 var Chesster = require('./src/engines/chesster').Chesster
-var Spoc = require('./src/engines/spoc').Spoc
+var Spoc = require('./src/engines/spoc')
 
 var engines = {
   chesster: new Chesster(),

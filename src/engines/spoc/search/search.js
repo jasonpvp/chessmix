@@ -1,6 +1,8 @@
-module.exports = {
-  scoreNextMoves: scoreNextMoves,
-  sortMoves: sortMoves
+module.exports = function Search () {
+  return {
+    scoreNextMoves: scoreNextMoves,
+    sortMoves: sortMoves
+  }
 }
 
 function scoreNextMoves (options) {
@@ -20,7 +22,7 @@ function sortMoves (options) {
     searchCount = 1
   }
 
-  if (options.context.turn === options.context.game.player) {
+  if (options.context.turn === options.context.player) {
     options.moves.sort(sortByScoreDesc)
   } else {
     options.moves.sort(sortByScoreAsc)
@@ -30,7 +32,7 @@ function sortMoves (options) {
   }
 //var m = options.moves.map(function (m) { return m.simpleMove })
 //if (m.indexOf('h4g5') >= 0 || m.indexOf('d8g5') >= 0) {
-//  console.log('PLAYER: ' + options.context.game.player + ' TURN: ' + options.context.turn + ' ' + (options.context.turn === options.context.game.player) + ' ' + options.moves.map(function (m) { return m.simpleMove + '(' + m.staticEval.absScore + ')' }).join(', '))
+//  console.log('PLAYER: ' + options.context.player + ' TURN: ' + options.context.turn + ' ' + (options.context.turn === options.context.player) + ' ' + options.moves.map(function (m) { return m.simpleMove + '(' + m.staticEval.absScore + ')' }).join(', '))
 //}
   var searchMoves
   if (searchCount > goodCount) {

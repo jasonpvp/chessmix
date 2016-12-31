@@ -8,7 +8,9 @@
 *
 *   Options:
 *     context:
-*       game: object for the board, player, current score, etc
+*       board: a chess.js board,
+*       player: -1 | 1
+*       turn: -1 | 1
 *       moves: options argument to provide previously-searched moves. When not provided, moves are obtained from the board.
 *       prevMove: the move the preceded the current board state
 *       haltSearch: called before each search recursion if search should be aborted. Current best move is passed to this function
@@ -23,28 +25,28 @@
 *       sortMoves: provided the current context, a list of moves and the score object, returns moves sorted in order to search
 */
 
-module.exports = {
-  scoreMoves: scoreMoves
+module.exports = function ScoreMoves (options) {
+  return scoreMoves(options)
 }
 
 // TODO: allow context to include a moveCache
 var defaultContext = {
-  game: null,
+  player: null,
+  turn: null,
+  board: null,
   moves: null,
   prevMove: null,
   haltSearch: null,
   onSearchComplete: null,
   maxDepth: 200,
   depth: 0,
-  turn: null,
-  game: null,
   path: ''
 }
 
 function scoreMoves (options) {
   var context = Object.assign({}, defaultContext, options.context)
 
-  var board = context.game.board
+  var board = context.board
   var evaluate = options.evaluate
   var search = options.search
   var moves = getMoves(context)
@@ -61,8 +63,8 @@ function scoreMoves (options) {
   if (context.depth === 0) {
     console.log('top moves: %o', moves.map(m =>  m.simpleMove + ':' + m.staticEval.score).join(', '))
 //  } else if (context.depth < 3) {
-//    var isNum = parseInt(options.context.game.player) === options.context.game.player
-//    console.log('Player: ' + isNum + ' ' + options.context.game.player + ' Score path: ' + options.context.path + ' with ' + moves.length + ' moves')
+//    var isNum = parseInt(options.context.player) === options.context.player
+//    console.log('Player: ' + isNum + ' ' + options.context.player + ' Score path: ' + options.context.path + ' with ' + moves.length + ' moves')
   }
 
   if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: moves})) {
@@ -106,7 +108,7 @@ function getMoves (options) {
     return options.moves
   }
 
-  return options.game.board.moves({verbose: true}).map(function (move) {
+  return options.board.moves({verbose: true}).map(function (move) {
     var simple = simpleMove(move)
     return {
       verboseMove: move,

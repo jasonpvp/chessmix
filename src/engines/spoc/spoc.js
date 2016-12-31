@@ -15,11 +15,13 @@ function Spoc () {
 
       var game = gameStore.findGame(gameOptions)
       if (!game) {
-        options.engine = new Brain()
+        options.engine = new Brain(options)
         game = gameStore.newGame(options)
       }
 
       return game.engine.getNextMove({game: game, moves: options.moves}).then(function (nextMove) {
+        nextMove.gameId = game.gameId
+        nextMove.player = game.player
         return nextMove
       })
     }

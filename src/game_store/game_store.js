@@ -9,6 +9,7 @@ function GameStore () {
     newGame: function (options) {
       var game = new Game(options)
       games[gameId(game)] = game
+      return game
     }
   })
 }
