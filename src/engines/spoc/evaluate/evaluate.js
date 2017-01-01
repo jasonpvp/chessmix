@@ -45,9 +45,14 @@ function predictiveEval (options) {
   var absScore = options.nextMoves.reduce(function (score, move) {
     var moveScore = move.predictiveEval || move.staticEval
     var relativeScore = moveScore.absScore
+    // TODO: use tactics here to determine best options not just average outcomes
     if (options.context.depth === 1 && moveScore.absScore < options.context.currentEval.staticEval.absScore) {
       relativeScore *= options.nextMoves.length
     }
+    if (options.context.depth === 2 && moveScore.absScore > move.prevMove.staticEval.absScore) {
+      relativeScore *= options.nextMoves.length
+    }
+
     return score + relativeScore
   }, 0) / (options.nextMoves.length || 1)
   if (options.move.analysis.isFork) absScore += 10

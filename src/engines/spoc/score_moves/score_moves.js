@@ -62,7 +62,7 @@ function scoreMoves (options) {
     board.undo()
   })
 
-  if (options.context.depth > 0) {
+  if (options.context.depth > 1) {
     goodMoves = moves.filter(function (move) {
       return isNotBad({move: move, context: options.context})
     })
@@ -164,6 +164,6 @@ function simpleMove (verboseMove) {
 
 function isNotBad (options) {
   var badness = options.move.staticEval.absDelta
-  if (badness < -1 && options.context.depth < 3) console.log(options.move.path + ' is bad: ' + badness + ' at depth ' + options.context.depth)
+//  if (badness < -1 && options.context.depth < 3) console.log(options.move.path + ' is bad: ' + badness + ' at depth ' + options.context.depth)
   return (badness >= -1)
 }
