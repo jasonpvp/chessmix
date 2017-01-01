@@ -28,15 +28,26 @@ function staticEval (options) {
     absScore: absScore,
     absDelta: absScore - options.context.currentEval.staticEval.absScore
   }
-  if (options.move) options.move.staticEval = eval
+  if (options.move) {
+    options.move.staticEval = eval
+    options.move.path += '(' + eval.absScore + ')'
+    if (options.move.rootMove.bestPath.absScore < eval.absScore) {
+      options.move.rootMove.bestPath = {
+        path: options.move.path,
+        absScore: eval.absScore
+      }
+    }
+  }
   return eval
 }
 
 function predictiveEval (options) {
   var absScore = options.nextMoves.reduce(function (score, move) {
     var moveScore = move.predictiveEval || move.staticEval
-    var relativeScore = moveScore.absScore / ((options.context.depth + 1) || 1)
-
+    var relativeScore = moveScore.absScore
+    if (options.context.depth === 1 && moveScore.absScore < options.context.currentEval.staticEval.absScore) {
+      relativeScore *= options.nextMoves.length
+    }
     return score + relativeScore
   }, 0) / (options.nextMoves.length || 1)
   if (options.move.analysis.isFork) absScore += 10
@@ -45,6 +56,14 @@ function predictiveEval (options) {
     score: absScore * options.context.player,
     absScore: absScore
   }
-  if (options.move) options.move.predictiveEval = eval
+  if (options.move) {
+    options.move.predictiveEval = eval
+    if (options.move.rootMove.bestPath.absScore < eval.absScore) {
+      options.move.rootMove.bestPath = {
+        path: options.move.path,
+        absScore: eval.absScore
+      }
+    }
+  }
   return eval
 }

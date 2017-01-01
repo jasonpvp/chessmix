@@ -66,7 +66,7 @@ console.log('load fen: ' + options.fen)
   function responseMove (move) {
     // remove references to other moves to avoid circular refs during serialization
     return Object.keys(move).reduce(function (m, key) {
-      if (key !== 'prevMove' && key !== 'nextMoves') {
+      if (key !== 'prevMove' && key !== 'nextMoves' && key !== 'rootMove') {
         m[key] = move[key]
       }
       return m

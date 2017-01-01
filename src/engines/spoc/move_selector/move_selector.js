@@ -6,7 +6,7 @@ function MoveSelector (options) {
 
   Object.assign(this, {
     reset: function () {
-      this.bestMove = {}
+      this.bestMove = {bestPath: {path: 'null', absScore: 0}}
       this.scoredMoves = {}
     },
     log: function (msg) {
@@ -20,7 +20,7 @@ MoveSelector.prototype.selectBetterMove = function (options) {
   this.scoredMoves[options.newMove.simpleMove] = options.newMove
   var newBestMove = this.findBestMove()
   if (this.bestMove !== newBestMove) {
-    this.log('!!! New best move: ' + newBestMove.path + ' better than ' + this.bestMove.path)
+    this.log('!!! New best move: ' + newBestMove.bestPath.absScore + ' ' + newBestMove.bestPath.path + ' better than ' + this.bestMove.bestPath.path)
     this.bestMove = newBestMove
   }
 }
