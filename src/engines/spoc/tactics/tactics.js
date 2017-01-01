@@ -15,7 +15,7 @@
 */
 
 module.exports = {
-  safeCapture: require('./safe_capture'),
-  sacrifice: require('./sacrifice'),
-  trade: require('./trade')
+  isSafeCapture: require('./safe_capture'),
+  isSacrifice: require('./sacrifice'),
+  isTrade: require('./trade')
 }

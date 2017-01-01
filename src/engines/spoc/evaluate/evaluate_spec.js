@@ -17,7 +17,12 @@ describe('evaluate', () => {
     evaluate = new Evaluate(evalConfig)
     context = {
       player: -1,
-      board: board
+      board: board,
+      currentEval: {
+        staticEval: {
+          absScore: 0
+        }
+      }
     }
   })
 

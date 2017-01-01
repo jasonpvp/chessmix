@@ -20,7 +20,6 @@ describe('analyze', () => {
       [{simpleMove: 'c1e1', captured: 'r'}]
     ]
     board.moves = () => nextMoves.splice(0,1)[0]
-
     var moves = ScoreMoves({context: context, evaluate: evaluate, search: search})
     expect(moves.filter(move => move.analysis.isFork).length).to.eql(1)
   })
@@ -88,8 +87,8 @@ function mockContext (options) {
 
 function mockEvaluate () {
   return {
-    staticEval: () => ({absScore: 0}),
-    predictiveEval: () => ({absScore: 0})
+    staticEval: () => ({absScore: 0, absDelta: 0}),
+    predictiveEval: () => ({absScore: 0, absDelta: 0})
   }
 }
 

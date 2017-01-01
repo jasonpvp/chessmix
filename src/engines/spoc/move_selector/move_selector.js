@@ -18,7 +18,7 @@ function MoveSelector (options) {
 MoveSelector.prototype.selectBetterMove = function (options) {
   if (this.newMoveBeatsCurrentMove(options)) {
     this.bestMove = options.newMove
-    this.log('!!! New best move: ' + options.newMove.simpleMove)
+    this.log('!!! New best move: ' + options.newMove.simpleMove + ' ' + options.newMove.path)
   }
 }
 

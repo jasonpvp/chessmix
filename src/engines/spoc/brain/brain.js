@@ -42,6 +42,8 @@ module.exports = function Brain (options) {
       engine.prevEval = engine.currentEval
       engine.moveSelector.reset()
       engine.searchStats.clearPredictions()
+console.log('load fen: ' + options.fen)
+      state.board.load(options.fen)
       logger.logInfo(state.board.ascii())
 
       return searchMoves(options).then(function () {
@@ -116,8 +118,7 @@ module.exports = function Brain (options) {
     var board = new Chess()
     if (options.fen) {
       board.load(options.fen)
-    }
-    if (options.moves) {
+    } else if (options.moves) {
       applyMoves({board: board, moves: options.moves})
     }
     return board

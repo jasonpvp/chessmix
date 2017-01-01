@@ -26,6 +26,7 @@
 */
 
 var analyze = require('../tactics/analyze')
+var Tactics = require('../tactics')
 
 module.exports = function ScoreMoves (options) {
   return scoreMoves(options)
@@ -52,6 +53,7 @@ function scoreMoves (options) {
   var evaluate = options.evaluate
   var search = options.search
   var moves = getMoves(context)
+  var goodMoves = moves
 
   moves.forEach(function (move) {
     if (move.staticEval) return
@@ -60,9 +62,20 @@ function scoreMoves (options) {
     board.undo()
   })
 
+  if (options.context.depth > 0) {
+    goodMoves = moves.filter(function (move) {
+      return isNotBad({move: move, context: options.context})
+    })
+  }
+
+  if (options.context.depth === 1 && goodMoves.length < moves.length) {
+    console.log('return cause move is bad: ' + moves[0].prevMove.path)
+    return moves
+  }
+
   var recurseMoves = search.sortMoves({context: context, moves: moves})
 
-  if (context.depth === 0) {
+  if (context.depth === 1) {
     console.log('top moves: %o', recurseMoves.map(m =>  m.simpleMove + ':' + m.staticEval.score).join(', '))
   }
 //  console.log('Score path: ' + options.context.path + ' with ' + recurseMoves.length + ' moves')
@@ -79,11 +92,10 @@ function scoreMoves (options) {
   for (var i = 0; i < len && !context.haltSearch(); i++) {
     var move = recurseMoves[i]
     if (!move) return
-
     move.recursed = true
     board.move(move.simpleMove, {sloppy: true})
     nextContext.prevMove = move
-//    nextContext.moves = move.nextMoves
+    nextContext.moves = move.nextMoves
     nextContext.path = context.path + move.simpleMove + '(' + move.staticEval.absScore + '):'
 
     var nextMoves = scoreMoves({
@@ -91,11 +103,12 @@ function scoreMoves (options) {
       evaluate: evaluate,
       search: search
     })
+
     move.nextMoves = nextMoves || []
-    move.predictiveEval = evaluate.predictiveEval({context: context, move: move, nextMoves: move.nextMoves})
     if (context.depth === 0) {
       move.analysis = analyze({move: move})
     }
+    move.predictiveEval = evaluate.predictiveEval({context: context, move: move, nextMoves: move.nextMoves})
     board.undo()
   }
 
@@ -119,6 +132,7 @@ function getMoves (options) {
       depth: options.depth,
       staticEval: null,
       predictiveEval: null,
+      analysis:{},
       recursed: false,
       nextMoves: null,
       prevMove: options.prevMove
@@ -139,4 +153,10 @@ function simpleMove (verboseMove) {
     }
   }
   return from + to + (verboseMove.promotion || '')
+}
+
+function isNotBad (options) {
+  var badness = options.move.staticEval.absDelta
+  if (badness < -1 && options.context.depth < 3) console.log(options.move.path + ' is bad: ' + badness + ' at depth ' + options.context.depth)
+  return (badness >= -1)
 }

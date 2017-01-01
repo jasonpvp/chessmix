@@ -19,7 +19,7 @@ function Spoc () {
         game = gameStore.newGame(options)
       }
 
-      return game.engine.getNextMove({game: game, moves: options.moves}).then(function (nextMove) {
+      return game.engine.getNextMove({game: game, fen: options.fen, moves: options.moves}).then(function (nextMove) {
         nextMove.gameId = game.gameId
         nextMove.player = game.player
         return nextMove

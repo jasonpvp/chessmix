@@ -19,11 +19,9 @@ function analyzeMove (move0) {
 
     var move1Analysis = nextMoves.reduce(function (move1Analysis, move2) {
       move1Analysis.allowsCapture = move1Analysis.allowsCapture || (move2.verboseMove.captured !== undefined && move2.verboseMove.from === move0.verboseMove.to)
-
       var move2Analysis = (move2.nextMoves || []).reduce(function (move2Analysis, move3) {
         return move2Analysis
-      }, {
-      })
+      }, {})
       move1Analysis.isSacrifice = move2Analysis.isSacrifice
 
       return move1Analysis

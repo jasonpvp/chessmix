@@ -161,10 +161,10 @@ export class App extends React.Component {
   makeNextMove () {
     if (this.board.turn() === 'b') {
       console.log('Blacks turn')
-      this.state.blackPlayer.getMove({moves: this.state.moves, player: -1, gameId: this.state.gameId}).then(this.makeMove)
+      this.state.blackPlayer.getMove({fen: this.board.fen(), moves: this.state.moves, player: -1, gameId: this.state.gameId}).then(this.makeMove)
     } else {
       console.log('Whites turn')
-      this.state.whitePlayer.getMove({moves: this.state.moves, player: 1, gameId: this.state.gameId}).then(this.makeMove)
+      this.state.whitePlayer.getMove({fen: this.board.fen(), moves: this.state.moves, player: 1, gameId: this.state.gameId}).then(this.makeMove)
     }
   }
 

@@ -28,7 +28,7 @@ describe('scoreMoves', () => {
       simpleMove: 'a2a3',
       path: ':a2a3',
       depth: 0,
-      staticEval: {score: 0},
+      staticEval: {score: 0, absScore: 0, absDelta: 0},
       predictiveEval: {score: 0},
       analysis: {isFork: false},
       recursed: true,
@@ -136,14 +136,13 @@ describe('scoreMoves', () => {
     context.board.moves = () => movePath.shift()
 
     // simply return the move as the score to make it easy to validate predicted score
-    evaluate.staticEval = options => ({score: options.move.simpleMove})
+    evaluate.staticEval = options => ({score: options.move.simpleMove, absDelta: 0})
     evaluate.predictiveEval = options => {
       var score = options.move.staticEval.score + ':' + options.nextMoves.map(m => m.predictiveEval.score).join('+')
       return {score: score}
     }
 
     var moves = ScoreMoves({context, context, evaluate: evaluate, search: search})
-console.log(moves[0])
     expect(moves[0].predictiveEval.score).to.eql('a2a3:a3a4:a4a5:+a4b5:')
   })
 
@@ -166,7 +165,7 @@ console.log(moves[0])
 
   it('sets the nextMoves for a move', () => {
     var movePath = [
-      [{from: 'a2', to: 'a3'}],
+      [{from: 'x2', to: 'a3'}],
       [{from: 'a3', to: 'a4'}],
       []
     ]
@@ -214,7 +213,7 @@ function mockBoard () {
 
 function mockEvaluate () {
   return {
-    staticEval: () => ({score: 0}),
+    staticEval: () => ({score: 0, absScore: 0, absDelta: 0}),
     predictiveEval: () => ({score: 0})
   }
 }

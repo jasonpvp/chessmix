@@ -9,13 +9,14 @@ function scoreNextMoves (options) {
   return true
 }
 
+var searchFirstMoves = 15
 // TODO: randomize with respect to good, ok and bad moves
 function sortMoves (options) {
   var searchCount
   var goodCount = 5
   var moveCount = options.moves.length
   if (options.context.depth < 2) {
-    searchCount = (10 <= moveCount) ? 10 : moveCount
+    searchCount = (searchFirstMoves <= moveCount) ? searchFirstMoves : moveCount
   } else if (options.context.depth < 4) {
     searchCount = 2
   } else {
