@@ -76,7 +76,7 @@ function scoreMoves (options) {
   var recurseMoves = search.sortMoves({context: context, moves: moves})
 
   if (context.depth === 1) {
-    console.log('Recursed on ' + recurseMoves[0].prevMove.simpleMove + ', top moves: %o', recurseMoves.map(m =>  m.simpleMove + ':' + m.staticEval.score).join(', '))
+//    console.log('Recursed on ' + recurseMoves[0].prevMove.simpleMove + ', top moves: %o', recurseMoves.map(m =>  m.simpleMove + ':' + m.staticEval.score).join(', '))
   }
   //console.log('Score path: ' + options.context.path + ' with ' + recurseMoves.length + ' moves')
   if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: recurseMoves})) {
@@ -110,7 +110,7 @@ function scoreMoves (options) {
     }
     move.predictiveEval = evaluate.predictiveEval({context: context, move: move, nextMoves: move.nextMoves})
     if (context.depth === 0) {
-      console.log('pred score: ' + move.simpleMove + ' ' + move.predictiveEval.absScore)
+      console.log('Predicted score: ' + move.predictiveEval.absScore + ' for: ' + move.predictiveEval.path)
     }
 
     board.undo()
@@ -133,7 +133,6 @@ function getMoves (options) {
       verboseMove: move,
       simpleMove: simple,
       path: options.path + ':' + simple,
-      bestPath: {absScore: Number.NEGATIVE_INFINITY, path: 'null'},
       depth: options.depth,
       staticEval: null,
       predictiveEval: null,

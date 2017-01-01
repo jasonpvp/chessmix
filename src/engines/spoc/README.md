@@ -8,3 +8,7 @@
 - recurse to maxDepth
 - minimax in reverse
 - each time a root move is scored, re-select the best move
+
+- use tactics to influence which branches to explore
+  - current it explores the best scores
+  - chance fork on next move means explore
