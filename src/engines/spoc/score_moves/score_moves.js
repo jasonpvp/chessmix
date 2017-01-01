@@ -25,6 +25,8 @@
 *       sortMoves: provided the current context, a list of moves and the score object, returns moves sorted in order to search
 */
 
+var analyze = require('../tactics/analyze')
+
 module.exports = function ScoreMoves (options) {
   return scoreMoves(options)
 }
@@ -58,32 +60,30 @@ function scoreMoves (options) {
     board.undo()
   })
 
-  moves = search.sortMoves({context: context, moves: moves})
+  var recurseMoves = search.sortMoves({context: context, moves: moves})
 
   if (context.depth === 0) {
-    console.log('top moves: %o', moves.map(m =>  m.simpleMove + ':' + m.staticEval.score).join(', '))
-//  } else if (context.depth < 3) {
-//    var isNum = parseInt(options.context.player) === options.context.player
-//    console.log('Player: ' + isNum + ' ' + options.context.player + ' Score path: ' + options.context.path + ' with ' + moves.length + ' moves')
+    console.log('top moves: %o', recurseMoves.map(m =>  m.simpleMove + ':' + m.staticEval.score).join(', '))
   }
-
-  if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: moves})) {
+//  console.log('Score path: ' + options.context.path + ' with ' + recurseMoves.length + ' moves')
+  if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: recurseMoves})) {
     return moves
   }
 
-  var len = moves.length
+  var len = recurseMoves.length
   var nextContext = Object.assign({}, context, {
     depth: context.depth + 1,
     turn: context.turn * -1
   })
 
   for (var i = 0; i < len && !context.haltSearch(); i++) {
-    var move = moves[i]
+    var move = recurseMoves[i]
     if (!move) return
 
+    move.recursed = true
     board.move(move.simpleMove, {sloppy: true})
     nextContext.prevMove = move
-    nextContext.moves = move.nextMoves
+//    nextContext.moves = move.nextMoves
     nextContext.path = context.path + move.simpleMove + '(' + move.staticEval.absScore + '):'
 
     var nextMoves = scoreMoves({
@@ -91,9 +91,11 @@ function scoreMoves (options) {
       evaluate: evaluate,
       search: search
     })
-
-    move.predictiveEval = evaluate.predictiveEval({context: context, move: move, nextMoves: nextMoves})
-    move.nextMoves = nextMoves
+    move.nextMoves = nextMoves || []
+    move.predictiveEval = evaluate.predictiveEval({context: context, move: move, nextMoves: move.nextMoves})
+    if (context.depth === 0) {
+      move.analysis = analyze({move: move})
+    }
     board.undo()
   }
 
@@ -109,16 +111,17 @@ function getMoves (options) {
   }
 
   return options.board.moves({verbose: true}).map(function (move) {
-    var simple = simpleMove(move)
+    var simple = move.simpleMove || simpleMove(move)
     return {
       verboseMove: move,
       simpleMove: simple,
+      path: options.path + ':' + simple,
+      depth: options.depth,
       staticEval: null,
       predictiveEval: null,
+      recursed: false,
       nextMoves: null,
-      prevMove: options.prevMove,
-      path: options.path + ':' + simple,
-      depth: options.depth
+      prevMove: options.prevMove
     }
   })
 }

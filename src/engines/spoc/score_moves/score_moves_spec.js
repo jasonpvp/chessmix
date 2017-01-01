@@ -23,16 +23,20 @@ describe('scoreMoves', () => {
     context.board.moves = () => movePath.shift()
 
     var moves = ScoreMoves({context, context, evaluate: evaluate, search: search})
-    expect(moves[0]).to.eql({
+    var expected = {
       verboseMove: {from: 'a2', to: 'a3'},
       simpleMove: 'a2a3',
+      path: ':a2a3',
+      depth: 0,
       staticEval: {score: 0},
       predictiveEval: {score: 0},
+      analysis: {isFork: false},
+      recursed: true,
       nextMoves: [],
-      prevMove: null,
-      depth: 0,
-      path: ':a2a3'
-    })
+      prevMove: null
+    }
+
+    expect(moves[0]).to.eql(expected, JSON.stringify(moves[0]) + '\ndid not equal:\n' + JSON.stringify(expected))
   })
 
   it('returns moves sorted by score', () => {
