@@ -23,11 +23,13 @@ function staticEval (options) {
   var boardArray = asciiBoardToArray(board.ascii())
   var score = cardinalScore({boardArray: boardArray})
   var absScore = score * options.context.player
-  return {
+  var eval = {
     score: score,
     absScore: absScore,
     absDelta: absScore - options.context.currentEval.staticEval.absScore
   }
+  if (options.move) options.move.staticEval = eval
+  return eval
 }
 
 function predictiveEval (options) {
@@ -39,8 +41,10 @@ function predictiveEval (options) {
   }, 0) / (options.nextMoves.length || 1)
   if (options.move.analysis.isFork) absScore += 10
 
-  return {
+  var eval = {
     score: absScore * options.context.player,
     absScore: absScore
   }
+  if (options.move) options.move.predictiveEval = eval
+  return eval
 }

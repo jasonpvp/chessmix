@@ -59,6 +59,7 @@ function scoreMoves (options) {
     if (move.staticEval) return
     board.move(move.simpleMove, {sloppy: true})
     move.staticEval = evaluate.staticEval({context: context, move: move})
+    move.path += '(' + move.staticEval.absScore + ')'
     board.undo()
   })
 
@@ -78,7 +79,7 @@ function scoreMoves (options) {
   if (context.depth === 1) {
     console.log('top moves: %o', recurseMoves.map(m =>  m.simpleMove + ':' + m.staticEval.score).join(', '))
   }
-//  console.log('Score path: ' + options.context.path + ' with ' + recurseMoves.length + ' moves')
+  //console.log('Score path: ' + options.context.path + ' with ' + recurseMoves.length + ' moves')
   if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: recurseMoves})) {
     return moves
   }
@@ -96,7 +97,7 @@ function scoreMoves (options) {
     board.move(move.simpleMove, {sloppy: true})
     nextContext.prevMove = move
     nextContext.moves = move.nextMoves
-    nextContext.path = context.path + move.simpleMove + '(' + move.staticEval.absScore + '):'
+    nextContext.path = move.path
 
     var nextMoves = scoreMoves({
       context: nextContext,
@@ -119,9 +120,9 @@ function scoreMoves (options) {
 }
 
 function getMoves (options) {
-  if (options.moves) {
-    return options.moves
-  }
+//  if (options.moves) {
+//    return options.moves
+//  }
 
   return options.board.moves({verbose: true}).map(function (move) {
     var simple = move.simpleMove || simpleMove(move)
