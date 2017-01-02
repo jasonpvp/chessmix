@@ -21,7 +21,12 @@ function scoreWithCallback (scoreFunction, options, callback) {
 function staticEval (options) {
   var board = options.context.board
   var boardArray = asciiBoardToArray(board.ascii())
-  var score = cardinalScore({boardArray: boardArray})
+  var score
+  if (board.in_checkmate()) {
+    score = Number.POSITIVE_INFINITY * options.context.turn
+  } else {
+    score = cardinalScore({boardArray: boardArray})
+  }
   var absScore = score * options.context.player
 
   var eval = {

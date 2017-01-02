@@ -31,10 +31,7 @@ function sortMoves (options) {
   if (searchCount === moveCount) {
     return options.moves
   }
-//var m = options.moves.map(function (m) { return m.simpleMove })
-//if (m.indexOf('h4g5') >= 0 || m.indexOf('d8g5') >= 0) {
-//  console.log('PLAYER: ' + options.context.player + ' TURN: ' + options.context.turn + ' ' + (options.context.turn === options.context.player) + ' ' + options.moves.map(function (m) { return m.simpleMove + '(' + m.staticEval.absScore + ')' }).join(', '))
-//}
+
   var searchMoves
   if (searchCount > goodCount) {
     searchMoves = options.moves.slice(0,goodCount)
