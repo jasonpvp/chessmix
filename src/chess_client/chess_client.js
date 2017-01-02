@@ -23,8 +23,8 @@ export function ChessClient () {
 function getMove (options) {
   return new Promise((resolve, reject) => {
     options.moves = options.moves || []
-console.log('get with options: %o', options)
-console.log(moveUrl(options))
+    console.log('get with options: %o', options)
+    console.log(moveUrl(options))
     fetch(moveUrl(options)).then(response => {
       return response.json()
     }).then(data => {

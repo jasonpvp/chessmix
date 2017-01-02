@@ -3,6 +3,7 @@ module.exports = MoveSelector
 function MoveSelector (options) {
   var logger = options.logger
   var moveSelector = this
+  var rejectMove = options.rejectMove
 
   Object.assign(this, {
     reset: function () {
@@ -11,6 +12,9 @@ function MoveSelector (options) {
     },
     log: function (msg) {
       logger.logInfo('MoveSelector: ' + msg)
+    },
+    rejectMove: function (options) {
+      rejectMove(options)
     }
   })
   this.reset()
@@ -23,6 +27,7 @@ MoveSelector.prototype.selectBetterMove = function (options) {
     var oldEval = this.bestMove.predictiveEval || this.bestMove.staticEval || {}
     var eval = newBestMove.predictiveEval || newBestMove.staticEval
     this.log('!!! New best move - Score: ' + eval.absScore + ' ' + eval.path + ' better than score: ' + oldEval.absScore + ' ' + oldEval.path)
+    this.rejectMove({move: this.bestMove})
     this.bestMove = newBestMove
   }
 }
@@ -37,7 +42,10 @@ MoveSelector.prototype.findBestMove = function () {
     return 0
   })
   var newBest = this.scoredMoves[sorted[0]]
-  if (moveEval(newBest).absScore > moveEval(this.bestMove).absScore) {
+  var newEval = moveEval(newBest)
+  var currentEval = moveEval(this.bestMove)
+
+  if (newEval.absScore > currentEval.absScore || (newEval.absScore === currentEval.absScore && newBest.predictiveEval && !this.bestMove.predictiveEval)) {
     return newBest
   } else {
     return this.bestMove

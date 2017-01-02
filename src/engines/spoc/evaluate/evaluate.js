@@ -23,21 +23,21 @@ function staticEval (options) {
   var boardArray = asciiBoardToArray(board.ascii())
   var score
   if (board.in_checkmate()) {
-    score = Number.POSITIVE_INFINITY * options.context.turn
+    score = 1000 * options.context.turn
   } else {
     score = cardinalScore({boardArray: boardArray})
   }
   var absScore = score * options.context.player
-
+  var path = (options.move ? options.move.path : 'null') + '(' + absScore + ')'
   var eval = {
     score: score,
     absScore: absScore,
     absDelta: absScore - options.context.currentEval.staticEval.absScore,
-    path: options.move ? options.move.path : 'null'
+    path: path
   }
   if (options.move) {
     options.move.staticEval = eval
-    options.move.path += '(' + eval.absScore + ')'
+    options.move.path = path
   }
   return eval
 }
@@ -49,12 +49,22 @@ function predictiveEval (options) {
   } else {
     options.nextMoves.sort(sortByScoreAsc)
   }
+
+  var tweek = 0
+  if (options.context.player === 1) {
+    tweek = options.nextMoves.reduce(function (sum, move) {
+      var eval = (move.predictiveEval || move.staticEval)
+      sum += eval.absScore
+      return sum
+    }, 0) / (options.nextMoves.length || 1) / 100
+  }
+
   var bestNextMove = options.nextMoves[0] || {staticEval: options.move.staticEval, path: options.move.path}
   var bestNextEval = bestNextMove.predictiveEval || bestNextMove.staticEval
 
   var eval = {
     score: bestNextEval.score,
-    absScore: bestNextEval.absScore,
+    absScore: bestNextEval.absScore + tweek,
     path: bestNextEval.path || bestNextMove.path
   }
   if (options.move) {

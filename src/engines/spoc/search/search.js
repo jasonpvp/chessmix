@@ -45,7 +45,11 @@ function sortMoves (options) {
   } else {
     searchMoves = options.moves.slice(0, searchCount)
   }
-  return searchMoves
+  var result = []
+  for (var i = 0; i < searchMoves.length; i+=3) {
+    result.push.apply(result, shuffleArray(searchMoves.slice(i, i + 3)))
+  }
+  return result
 }
 
 function sortByScoreDesc (a, b) {

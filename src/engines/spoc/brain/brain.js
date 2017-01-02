@@ -24,7 +24,7 @@ module.exports = function Brain (options) {
     search: new Search(),
     scoreMoves: ScoreMoves,
     evaluate: new Evaluate(evalConfig()),
-    moveSelector: new MoveSelector({logger: logger}),
+    moveSelector: new MoveSelector({logger: logger, rejectMove: rejectMove}),
 
     prevMove: null,
     currentEval: {
@@ -41,20 +41,25 @@ module.exports = function Brain (options) {
     getNextMove: function (options) {
       engine.prevEval = engine.currentEval
       engine.moveSelector.reset()
+
+      options.startDepth = options.moves ? options.moves.length - 1 : 0
+      engine.searchStats.setDepth({depth: options.startDepth})
       engine.searchStats.clearPredictions()
-console.log('load fen: ' + options.fen)
+      logger.logInfo('load fen: ' + options.fen)
       state.board.load(options.fen)
       logger.logInfo(state.board.ascii())
 
       return searchMoves(options).then(function () {
         var bestMove = engine.moveSelector.bestMove
+        var bestEval = bestMove.predictiveEval || bestMove.staticEval
+        bestEval.rejectedMoves = engine.searchStats.rejectedMoves.slice(1)
         engine.logger.logInfo('make best move: ' + bestMove.simpleMove)
         moveGame({move: bestMove})
         engine.prevMove = bestMove
 
         return {
           move: responseMove(bestMove),
-          prediction: engine.moveSelector.bestMove.path,
+          prediction: bestEval,
           searchStats: engine.searchStats.serialize(),
           prevEval: engine.prevEval,
           currentEval: engine.currentEval
@@ -71,6 +76,10 @@ console.log('load fen: ' + options.fen)
       }
       return m
     }, {})
+  }
+
+  function rejectMove(options) {
+    engine.searchStats.rejectMove(options)
   }
 
   function evalConfig () {
@@ -137,7 +146,7 @@ console.log('load fen: ' + options.fen)
     engine.logger.logInfo('search moves')
 
     return new Promise(function (resolve, reject) {
-      var timeLimit = (options.timeLimit || 30) * 1000
+      var timeLimit = (options.timeLimit || 20) * 1000
       var startTime = (new Date()).getTime()
 
       var context = {
@@ -148,7 +157,7 @@ console.log('load fen: ' + options.fen)
         maxDepth: 3,
         badPathThreshold: -1,
         tradeUpOdds: 0.005,
-        startDepth: options.moves ? options.moves.length - 1 : 0,
+        startDepth: options.startDepth,
         haltSearch: function () {
           var outOfTime = ((new Date()).getTime() - startTime) > timeLimit
           if (outOfTime) {
@@ -166,7 +175,6 @@ console.log('load fen: ' + options.fen)
       engine.currentEval = engine.evaluate.staticEval({context: context})
 
       engine.logger.logInfo('prev moves: ' + JSON.stringify(options.moves))
-      engine.searchStats.setDepth({depth: context.startDepth})
 
       engine.logger.logInfo('scoring moves from depth ' + context.startDepth + '...')
       // move scoring continues until haltSearch above returns true

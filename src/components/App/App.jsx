@@ -108,7 +108,7 @@ export class App extends React.Component {
       console.error('Invalid move options: %o', JSON.stringify(options))
       return
     }
-    console.log('Move) piece: %s %s', piece, move)
+    console.log('Move) piece: %s %s %o', piece, move, options)
 
     this.board.move(move, {sloppy: true})
 
@@ -234,7 +234,10 @@ export class App extends React.Component {
         </div>
         <Chessdiagram {...chessBoardProps} />
         {searchStats && <SearchGraph currentDepth={moves.length - 1} searchStats={searchStats} />}
-        {prediction && <div style={{position: 'absolute', top: '425px', left: '875px'}}>Prediction: {prediction.path}</div>}
+        {prediction && <div style={{position: 'absolute', top: '425px', left: '875px'}}>
+          <div>Prediction: {prediction.path}</div>
+          <div>Rejected moves:<pre>{prediction.rejectedMoves.join('\n')}</pre></div>
+        </div>}
       </div>
     )
   }

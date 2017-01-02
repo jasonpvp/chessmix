@@ -67,7 +67,7 @@ function scoreMoves (options) {
   }
 
   // TODO: move the block below into the scoreNextMoves function
-  if (options.context.depth > 1) {
+  if (options.context.depth > 1 && options.context.turn === options.context.player) {
     var worst = {staticEval: {absDelta: 0}}
     goodMoves = moves.filter(function (move) {
       var isGood = isGoodPath({move: move, context: options.context})
@@ -84,7 +84,10 @@ function scoreMoves (options) {
   }
 
   var recurseMoves = search.sortMoves({context: context, moves: moves})
-
+  if (options.context.depth === 1 && moves[0]) {
+    console.log('Recurse on ' + moves[0].prevMove.simpleMove)
+    console.log('Moves: ' + moves.map(function (move) { return move.simpleMove }).join(', '))
+  }
   //console.log('Score path: ' + options.context.path + ' with ' + recurseMoves.length + ' moves')
 
   var len = recurseMoves.length
