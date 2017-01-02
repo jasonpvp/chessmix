@@ -62,26 +62,30 @@ function scoreMoves (options) {
     board.undo()
   })
 
-  if (options.context.depth > 1) {
-    goodMoves = moves.filter(function (move) {
-      return isNotBad({move: move, context: options.context})
-    })
+  if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: moves})) {
+    return moves
   }
 
-  if (options.context.depth === 1 && goodMoves.length < moves.length) {
-    console.log('return cause move is bad: ' + moves[0].prevMove.path)
-    return moves
+  // TODO: move the block below into the scoreNextMoves function
+  if (options.context.depth > 1) {
+    var worst = {staticEval: {absDelta: 0}}
+    goodMoves = moves.filter(function (move) {
+      var isGood = isGoodPath({move: move, context: options.context})
+      if (!isGood && Math.abs(worst.staticEval.absDelta) < Math.abs(move.staticEval.absDelta)) {
+        worst = move
+      }
+      return isGood
+    })
+    if (goodMoves.length < moves.length) {
+      var who = (options.context.turn === options.context.player) ? 'Player' : 'Opponent'
+      console.log(who + ' pruned bad path: ' + worst.path)
+      return moves
+    }
   }
 
   var recurseMoves = search.sortMoves({context: context, moves: moves})
 
-  if (context.depth === 1) {
-//    console.log('Recursed on ' + recurseMoves[0].prevMove.simpleMove + ', top moves: %o', recurseMoves.map(m =>  m.simpleMove + ':' + m.staticEval.score).join(', '))
-  }
   //console.log('Score path: ' + options.context.path + ' with ' + recurseMoves.length + ' moves')
-  if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: recurseMoves})) {
-    return moves
-  }
 
   var len = recurseMoves.length
   var nextContext = Object.assign({}, context, {
@@ -161,8 +165,10 @@ function simpleMove (verboseMove) {
   return from + to + (verboseMove.promotion || '')
 }
 
-function isNotBad (options) {
-  var badness = options.move.staticEval.absDelta
-//  if (badness < -1 && options.context.depth < 3) console.log(options.move.path + ' is bad: ' + badness + ' at depth ' + options.context.depth)
-  return (badness >= -1)
+function isGoodPath (options) {
+  // isGoodPath is called for moves that follow the current move in the search
+  // The path is bad for the player making this move if any of the following moves
+  // reduce their position on the board beyond a certain threshold
+  var badness = options.move.staticEval.absDelta * options.context.turn * options.context.player
+  return (badness >= options.context.badPathThreshold)
 }

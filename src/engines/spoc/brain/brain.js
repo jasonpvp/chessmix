@@ -146,6 +146,7 @@ console.log('load fen: ' + options.fen)
         turn: turn({board: state.board}),
         currentEval: engine.currentEval,
         maxDepth: 3,
+        badPathThreshold: -1,
         tradeUpOdds: 0.005,
         startDepth: options.moves ? options.moves.length - 1 : 0,
         haltSearch: function () {
