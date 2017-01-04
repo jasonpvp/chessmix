@@ -23,7 +23,8 @@ export function ChessClient () {
 function getMove (options) {
   return new Promise((resolve, reject) => {
     options.moves = options.moves || []
-
+    console.log('get with options: %o', options)
+    console.log(moveUrl(options))
     fetch(moveUrl(options)).then(response => {
       return response.json()
     }).then(data => {
@@ -38,7 +39,8 @@ function getMove (options) {
 
 function moveUrl (options) {
   const moves = options.moves.join(' ')
-  return `${serverBaseUrl}/getMove?engine=${options.engine}&moves=${moves}&movetime=0&player=${options.player}&gameId=${options.gameId}`
+  var fen = encodeURI(options.fen)
+  return `${serverBaseUrl}/getMove?engine=${options.engine}&moves=${moves}&fen=${fen}&movetime=0&player=${options.player}&gameId=${options.gameId}`
 }
 
 function moveToOptions (move = '') {

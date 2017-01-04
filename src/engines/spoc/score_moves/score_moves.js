@@ -8,7 +8,9 @@
 *
 *   Options:
 *     context:
-*       game: object for the board, player, current score, etc
+*       board: a chess.js board,
+*       player: -1 | 1
+*       turn: -1 | 1
 *       moves: options argument to provide previously-searched moves. When not provided, moves are obtained from the board.
 *       prevMove: the move the preceded the current board state
 *       haltSearch: called before each search recursion if search should be aborted. Current best move is passed to this function
@@ -23,31 +25,35 @@
 *       sortMoves: provided the current context, a list of moves and the score object, returns moves sorted in order to search
 */
 
-module.exports = {
-  scoreMoves: scoreMoves
+var analyze = require('../tactics/analyze')
+var Tactics = require('../tactics')
+
+module.exports = function ScoreMoves (options) {
+  return scoreMoves(options)
 }
 
 // TODO: allow context to include a moveCache
 var defaultContext = {
-  game: null,
+  player: null,
+  turn: null,
+  board: null,
   moves: null,
   prevMove: null,
   haltSearch: null,
   onSearchComplete: null,
   maxDepth: 200,
   depth: 0,
-  turn: null,
-  game: null,
   path: ''
 }
 
 function scoreMoves (options) {
   var context = Object.assign({}, defaultContext, options.context)
 
-  var board = context.game.board
+  var board = context.board
   var evaluate = options.evaluate
   var search = options.search
   var moves = getMoves(context)
+  var goodMoves = moves
 
   moves.forEach(function (move) {
     if (move.staticEval) return
@@ -56,33 +62,48 @@ function scoreMoves (options) {
     board.undo()
   })
 
-  moves = search.sortMoves({context: context, moves: moves})
-
-  if (context.depth === 0) {
-    console.log('top moves: %o', moves.map(m =>  m.simpleMove + ':' + m.staticEval.score).join(', '))
-//  } else if (context.depth < 3) {
-//    var isNum = parseInt(options.context.game.player) === options.context.game.player
-//    console.log('Player: ' + isNum + ' ' + options.context.game.player + ' Score path: ' + options.context.path + ' with ' + moves.length + ' moves')
-  }
-
   if (context.depth > context.maxDepth || !search.scoreNextMoves({context: context, moves: moves})) {
     return moves
   }
 
-  var len = moves.length
+  // TODO: move the block below into the scoreNextMoves function
+  if (options.context.depth > 1 && options.context.turn === options.context.player) {
+    var worst = {staticEval: {absDelta: 0}}
+    goodMoves = moves.filter(function (move) {
+      var isGood = isGoodPath({move: move, context: options.context})
+      if (!isGood && Math.abs(worst.staticEval.absDelta) < Math.abs(move.staticEval.absDelta)) {
+        worst = move
+      }
+      return isGood
+    })
+    if (goodMoves.length < moves.length) {
+      var who = (options.context.turn === options.context.player) ? 'Player' : 'Opponent'
+      console.log(who + ' pruned bad path: ' + worst.path)
+      return moves
+    }
+  }
+
+  var recurseMoves = search.sortMoves({context: context, moves: moves})
+  if (options.context.depth === 1 && moves[0]) {
+    console.log('Recurse on ' + moves[0].prevMove.simpleMove)
+    console.log('Moves: ' + moves.map(function (move) { return move.simpleMove }).join(', '))
+  }
+  //console.log('Score path: ' + options.context.path + ' with ' + recurseMoves.length + ' moves')
+
+  var len = recurseMoves.length
   var nextContext = Object.assign({}, context, {
     depth: context.depth + 1,
     turn: context.turn * -1
   })
 
   for (var i = 0; i < len && !context.haltSearch(); i++) {
-    var move = moves[i]
+    var move = recurseMoves[i]
     if (!move) return
-
+    move.recursed = true
     board.move(move.simpleMove, {sloppy: true})
     nextContext.prevMove = move
     nextContext.moves = move.nextMoves
-    nextContext.path = context.path + move.simpleMove + '(' + move.staticEval.absScore + '):'
+    nextContext.path = move.path
 
     var nextMoves = scoreMoves({
       context: nextContext,
@@ -90,8 +111,15 @@ function scoreMoves (options) {
       search: search
     })
 
-    move.predictiveEval = evaluate.predictiveEval({context: context, move: move, nextMoves: nextMoves})
-    move.nextMoves = nextMoves
+    move.nextMoves = nextMoves || []
+    if (context.depth === 0) {
+      move.analysis = analyze({move: move})
+    }
+    move.predictiveEval = evaluate.predictiveEval({context: context, move: move, nextMoves: move.nextMoves})
+    if (context.depth === 0) {
+      console.log('Predicted score: ' + move.predictiveEval.absScore + ' for: ' + move.predictiveEval.path)
+    }
+
     board.undo()
   }
 
@@ -102,22 +130,26 @@ function scoreMoves (options) {
 }
 
 function getMoves (options) {
-  if (options.moves) {
-    return options.moves
-  }
+//  if (options.moves) {
+//    return options.moves
+//  }
 
-  return options.game.board.moves({verbose: true}).map(function (move) {
-    var simple = simpleMove(move)
-    return {
+  return options.board.moves({verbose: true}).map(function (move) {
+    var simple = move.simpleMove || simpleMove(move)
+    var moveObj = {
       verboseMove: move,
       simpleMove: simple,
+      path: options.path + ':' + simple,
+      depth: options.depth,
       staticEval: null,
       predictiveEval: null,
+      analysis:{},
+      recursed: false,
       nextMoves: null,
-      prevMove: options.prevMove,
-      path: options.path + ':' + simple,
-      depth: options.depth
+      prevMove: options.prevMove
     }
+    moveObj.rootMove = (options.prevMove && options.prevMove.rootMove) || moveObj
+    return moveObj
   })
 }
 
@@ -134,4 +166,12 @@ function simpleMove (verboseMove) {
     }
   }
   return from + to + (verboseMove.promotion || '')
+}
+
+function isGoodPath (options) {
+  // isGoodPath is called for moves that follow the current move in the search
+  // The path is bad for the player making this move if any of the following moves
+  // reduce their position on the board beyond a certain threshold
+  var badness = options.move.staticEval.absDelta * options.context.turn * options.context.player
+  return (badness >= options.context.badPathThreshold)
 }

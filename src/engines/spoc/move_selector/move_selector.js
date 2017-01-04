@@ -3,19 +3,52 @@ module.exports = MoveSelector
 function MoveSelector (options) {
   var logger = options.logger
   var moveSelector = this
+  var rejectMove = options.rejectMove
 
   Object.assign(this, {
-    bestMove: {},
+    reset: function () {
+      this.bestMove = {}
+      this.scoredMoves = {}
+    },
     log: function (msg) {
       logger.logInfo('MoveSelector: ' + msg)
+    },
+    rejectMove: function (options) {
+      rejectMove(options)
     }
   })
+  this.reset()
 }
 
 MoveSelector.prototype.selectBetterMove = function (options) {
-  if (this.newMoveBeatsCurrentMove(options)) {
-    this.bestMove = options.newMove
-    this.log('!!! New best move: ' + options.newMove.simpleMove)
+  this.scoredMoves[options.newMove.simpleMove] = options.newMove
+  var newBestMove = this.findBestMove()
+  if (this.bestMove !== newBestMove) {
+    var oldEval = this.bestMove.predictiveEval || this.bestMove.staticEval || {}
+    var eval = newBestMove.predictiveEval || newBestMove.staticEval
+    this.log('!!! New best move - Score: ' + eval.absScore + ' ' + eval.path + ' better than score: ' + oldEval.absScore + ' ' + oldEval.path)
+    this.rejectMove({move: this.bestMove})
+    this.bestMove = newBestMove
+  }
+}
+
+MoveSelector.prototype.findBestMove = function () {
+  var _this = this
+  var sorted = Object.keys(this.scoredMoves).sort(function (move1, move2) {
+    var move1Eval = moveEval(_this.scoredMoves[move1])
+    var move2Eval = moveEval(_this.scoredMoves[move2])
+    if (move1Eval.absScore < move2Eval.absScore) return 1
+    if (move1Eval.absScore > move2Eval.absScore) return -1
+    return 0
+  })
+  var newBest = this.scoredMoves[sorted[0]]
+  var newEval = moveEval(newBest)
+  var currentEval = moveEval(this.bestMove)
+
+  if (newEval.absScore > currentEval.absScore || (newEval.absScore === currentEval.absScore && newBest.predictiveEval && !this.bestMove.predictiveEval)) {
+    return newBest
+  } else {
+    return this.bestMove
   }
 }
 
@@ -33,15 +66,14 @@ MoveSelector.prototype.selectBetterMove = function (options) {
 *     This last state should be avoided by statically scoring all moves first, then predictively scoring the best move before all others
 */
 
-MoveSelector.prototype.newMoveBeatsCurrentMove = function (options) {
-  var currentMove = this.bestMove
-  var newMove = options.newMove
+function sortByScoreDesc (move1, move2) {
+  var move1Eval = moveEval(move1)
+  var move2Eval = moveEval(move2)
+  if (move1Eval.absScore < move2Eval.absScore) return 1
+  if (move1Eval.absScore > move2Eval.absScore) return -1
+  return 0
+}
 
-  if (!currentMove.predictiveEval || newMove.predictiveEval) {
-    return true
-  }
-
-  var currentEval = currentMove.predictiveEval || currentMove.staticEval || {absScore: Number.NEGATIVE_INFINITY}
-  var newEval = newMove.predictiveEval || newMove.staticEval || {absScore: Number.NEGATIVE_INFINITY}
-  return newEval.absScore > currentEval.absScore
+function moveEval (move) {
+  return move.predictiveEval || move.staticEval || {absScore: Number.NEGATIVE_INFINITY}
 }

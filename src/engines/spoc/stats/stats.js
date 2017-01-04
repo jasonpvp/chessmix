@@ -14,11 +14,13 @@ Stats.prototype.reset = function () {
   Object.assign(this, {
     predictionCount: 0,
     currentDepth: 0,
-    levels: []
+    levels: [],
+    rejectedMoves: []
   })
 }
 
 Stats.prototype.setDepth = function (options) {
+  console.log('Set pred depth: ' + options.depth)
   this.currentDepth = options.depth
 }
 
@@ -69,7 +71,13 @@ Stats.prototype.addStat = function (options) {
   }
 }
 
+Stats.prototype.rejectMove = function (options) {
+  var eval = options.move.predictiveEval || options.move.staticEval || {path: 'null'}
+  this.rejectedMoves.push(eval.path)
+}
+
 Stats.prototype.clearPredictions = function (options) {
+  console.log('Clear preds after ' + this.currentDepth)
   // remove prediction stats
   this.levels.splice(this.currentDepth)
   this.predictionCount= 0

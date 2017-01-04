@@ -1,4 +1,1 @@
-var Spoc = require('./spoc').Spoc
-module.exports = {
-  Spoc: Spoc
-}
+module.exports = require('./spoc')

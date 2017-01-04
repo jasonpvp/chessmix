@@ -1,16 +1,27 @@
 // http://www.ficsgames.org/download.html
 var Brain = require('./brain')
-var brain = new Brain()
+var GameStore = require('../../game_store')
+var gameStore = new GameStore()
 
-module.exports = {
-  Spoc: Spoc
-}
+module.exports = Spoc
 
 function Spoc () {
   return {
     getNextMove: function (options) {
-      var game = brain.getGame(options)
-      return brain.getNextMove({game: game, moves: options.moves}).then(function (nextMove) {
+      var gameOptions = {
+        gameId: options.gameId,
+        player: options.player
+      }
+
+      var game = gameStore.findGame(gameOptions)
+      if (!game) {
+        options.engine = new Brain(options)
+        game = gameStore.newGame(options)
+      }
+
+      return game.engine.getNextMove({game: game, fen: options.fen, moves: options.moves}).then(function (nextMove) {
+        nextMove.gameId = game.gameId
+        nextMove.player = game.player
         return nextMove
       })
     }

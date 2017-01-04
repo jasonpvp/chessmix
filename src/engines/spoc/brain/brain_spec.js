@@ -8,10 +8,8 @@ import Brain from './brain'
 // whiteLead is played first to take turns in the correct order
 function playerLoop (player) {
   describe('brain', () => {
-    var brain
-    var game
-    var gameId = 1
-    var playerColor, opponentColor
+    var brain, playerColor, opponentColor
+
     beforeEach(function () {
       if (player === 1) {
         playerColor = 'w'
@@ -21,57 +19,54 @@ function playerLoop (player) {
         opponentColor = 'w'
       }
       console.log('Test: Player ' + player + ' ' + this.currentTest.title)
-      brain = new Brain()
+      brain = new Brain({player: player})
     })
     afterEach(function () {
       console.log('Test board result: Player ' + player + ' ' + this.currentTest.title)
-      console.log(game.board.ascii())
+      console.log(brain.board.ascii())
     })
     describe('getNextMove', function () {
       this.timeout(10000)
 
       it('takes the best piece when its an obvious choice', () => {
-        game = brain.getGame({player: player, gameId: gameId})
         setupBoard({
-          board: game.board,
+          board: brain.board,
           fen: 'q7/R7/K7/8/k7/8/8/8 w KQkq - 0 50',
           player: player
         })
 
-        return brain.getNextMove({game: game, timeLimit: 9, player: player}).then((data) => {
-          let piece = game.board.get(cellForPlayer('a8', player))
+        return brain.getNextMove({timeLimit: 9}).then((data) => {
+          let piece = brain.board.get(cellForPlayer('a8', player))
           expect(piece).to.not.eql({type: 'q', color: opponentColor}, player + ' should have taken piece')
 
-          piece = game.board.get(cellForPlayer('a7', player))
+          piece = brain.board.get(cellForPlayer('a7', player))
           expect(piece).to.eql(null, player + ' should have taken piece with its rook')
         })
       })
 
       it('takes a piece when its the best choice', () => {
-        game = brain.getGame({player: player, gameId: gameId})
         setupBoard({
-          board: game.board,
+          board: brain.board,
           player: player,
           whiteLead: 'c2c3',
           moves: ['e7e6', 'h2h3', 'f8a3']
         })
 
-        return brain.getNextMove({game: game, timeLimit: 9, player}).then((data) => {
-          const piece = game.board.get(cellForPlayer('a3', player))
+        return brain.getNextMove({timeLimit: 9}).then((data) => {
+          const piece = brain.board.get(cellForPlayer('a3', player))
           expect(piece).to.not.eql({type: 'b', color: opponentColor}, player + ' should have taken piece')
         })
       })
 
       it('does not predict that opponent will fall for stupid tricks', () => {
-        game = brain.getGame({player: player, gameId: gameId})
         setupBoard({
-          board: game.board,
+          board: brain.board,
           player: player,
           fen: 'q1k5/p1p5/R7/K1P5/8/8/8/8 w KQkq - 0 50'
         })
 
-        return brain.getNextMove({game: game, timeLimit: 9, player}).then((data) => {
-          const piece = game.board.get(cellForPlayer('c6', player))
+        return brain.getNextMove({timeLimit: 9}).then((data) => {
+          const piece = brain.board.get(cellForPlayer('c6', player))
           expect(piece).to.not.eql({type: 'p', color: playerColor}, player + ' should have taken piece')
         })
       })

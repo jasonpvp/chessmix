@@ -1,7 +1,7 @@
 var express = require('express')
 var app = express()
 var Chesster = require('./src/engines/chesster').Chesster
-var Spoc = require('./src/engines/spoc').Spoc
+var Spoc = require('./src/engines/spoc')
 
 var engines = {
   chesster: new Chesster(),
@@ -41,7 +41,7 @@ function getEngineMove (options) {
 
 function sendStockfishMove (req, res) {
   var cmd = ['node ' + trainer]
-  if (req.query.fen) cmd.push.apply(cmd, ['-f', req.query.fen])
+  if (req.query.fen) cmd.push.apply(cmd, ['-f', '"' + req.query.fen + '"'])
   if (req.query.moves) cmd.push.apply(cmd, ['-m', '"' + req.query.moves + '"'])
   if (req.query.movetime !== undefined) cmd.push.apply(cmd, ['-t', req.query.movetime])
 

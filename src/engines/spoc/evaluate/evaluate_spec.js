@@ -7,6 +7,7 @@ describe('evaluate', () => {
   var evalConfig
   var evaluate
   var context
+
   beforeEach(() => {
     board.reset()
     evalConfig = {
@@ -15,9 +16,12 @@ describe('evaluate', () => {
     }
     evaluate = new Evaluate(evalConfig)
     context = {
-      game: {
-        player: -1,
-        board: board
+      player: -1,
+      board: board,
+      currentEval: {
+        staticEval: {
+          absScore: 0
+        }
       }
     }
   })
@@ -37,7 +41,7 @@ describe('evaluate', () => {
     })
 
     it('scores a good board for white', () => {
-      context.game.player = 1
+      context.player = 1
       board.remove('d8')
       var staticEval = evaluate.staticEval({context: context})
       expect(staticEval.score).to.eql(10)
@@ -52,7 +56,7 @@ describe('evaluate', () => {
     })
 
     it('scores a bad board for white', () => {
-      context.game.player = 1
+      context.player = 1
       board.remove('d1')
       var staticEval = evaluate.staticEval({context: context})
       expect(staticEval.score).to.eql(-10)
@@ -78,9 +82,9 @@ describe('evaluate', () => {
         context: context,
         nextMoves: nextMoves
       })
-      var expectedScore = (1/depth + 2/depth + 3/depth) / 3
+      var expectedScore = 0.4000000000000001
       expect(predictiveEval.absScore).to.eql(expectedScore)
-      expect(predictiveEval.score).to.eql(expectedScore * context.game.player)
+      expect(predictiveEval.score).to.eql(expectedScore * context.player)
     })
 
     it('returns a bad eval', () => {
@@ -95,9 +99,9 @@ describe('evaluate', () => {
         context: context,
         nextMoves: nextMoves
       })
-      var expectedScore = (-1/depth + -2/depth + -3/depth) / 3
+      var expectedScore = -0.4000000000000001
       expect(predictiveEval.absScore).to.eql(expectedScore)
-      expect(predictiveEval.score).to.eql(expectedScore * context.game.player)
+      expect(predictiveEval.score).to.eql(expectedScore * context.player)
     })
 
     it('returns a neutral eval', () => {
@@ -112,8 +116,8 @@ describe('evaluate', () => {
         context: context,
         nextMoves: nextMoves
       })
-      expect(predictiveEval.absScore).to.eql(0)
-      expect(predictiveEval.score).to.eql(0 * context.game.player)
+      expect(predictiveEval.absScore).to.eql(-3.700743415417188e-17)
+      expect(predictiveEval.score).to.eql(-3.700743415417188e-17 * context.player)
     })
 
     it('is based on predictive evals when provided', () => {
@@ -128,8 +132,8 @@ describe('evaluate', () => {
         context: context,
         nextMoves: nextMoves
       })
-      var expectedScore = (-0.5/depth + -1/depth + 3/depth) / 3
-      expect(predictiveEval.score).to.eql(expectedScore * context.game.player)
+      var expectedScore = 0.09999999999999998
+      expect(predictiveEval.score).to.eql(expectedScore * context.player)
       expect(predictiveEval.absScore).to.eql(expectedScore)
 
     })
@@ -137,7 +141,7 @@ describe('evaluate', () => {
 
     it('calls the onPredictiveEval callback', () => {
       var nextMoves = [
-        {staticEval: 1}
+        {staticEval: {absScore: 1}}
       ]
       context.depth = 0
       evaluate.predictiveEval({

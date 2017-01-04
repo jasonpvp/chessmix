@@ -1,7 +1,7 @@
 var cardinalScore = require('./cardinal_score').cardinalScore
 var asciiBoardToArray = require('../util').asciiBoardToArray
 
-module.exports = function (config) {
+module.exports = function Evaluate (config) {
   return {
     staticEval: function (options) {
       return scoreWithCallback(staticEval, options, config.onStaticEval)
@@ -19,55 +19,72 @@ function scoreWithCallback (scoreFunction, options, callback) {
 }
 
 function staticEval (options) {
-  var board = options.context.game.board
+  var board = options.context.board
   var boardArray = asciiBoardToArray(board.ascii())
-  var score = cardinalScore({boardArray: boardArray})
-  return {
-    score: score,
-    absScore: score * options.context.game.player
+  var score
+  if (board.in_checkmate()) {
+    score = 1000 * options.context.turn
+  } else {
+    score = cardinalScore({boardArray: boardArray})
   }
-}
-
-function staticChange (move, prevMove) {
-  return move.staticEval.absScore - prevMove.staticEval.absScore
+  var absScore = score * options.context.player
+  var path = (options.move ? options.move.path : 'null') + '(' + absScore + ')'
+  var eval = {
+    score: score,
+    absScore: absScore,
+    absDelta: absScore - options.context.currentEval.staticEval.absScore,
+    path: path
+  }
+  if (options.move) {
+    options.move.staticEval = eval
+    options.move.path = path
+  }
+  return eval
 }
 
 function predictiveEval (options) {
-  var absScore = options.nextMoves.reduce(function (score, move) {
-    var moveScore = move.predictiveEval || move.staticEval
-    var relativeScore = moveScore.absScore / ((options.context.depth + 1) || 1)
-    var ttlChange = 0//moveScore.absScore - options.context.currentEval.absScore
-    if (options.context.depth === 3 && ttlChange < 0) {
-      moveScore *= 10
-    }
-    // TODO: generalize the opponent trap aversion
-    if (options.context.depth === 3 && move.verboseMove.captured && move.staticEval.absScore > options.context.currentEval.absScore) {
-      var move = options.move
-      var moves = []
-      while (move) {
-        moves.unshift(move)
-        move = move.prevMove
-      }
-
-//      console.log('moves: ' + moves.map(m => m.simpleMove).join('-'))
-      var opponentGain = staticChange(moves[1], moves[0]) * -1
-      var opponentLoss = staticChange(moves[2], moves[1])
-      var trapPayoff = opponentLoss - opponentGain
-//      console.log('loss: ' + opponentGain + ' gain: ' + opponentLoss + ' payoff ' + trapPayoff)
-      var opponentTrapAversion = 0
-      if (opponentGain > 0 && trapPayoff > 0) {
-        var opponentTrapAversion = trapPayoff * (1 - options.context.tradeUpOdds)
-        var adjustment = opponentTrapAversion
-        relativeScore -= adjustment
-        console.log(options.context.path)
-        console.log('adjust for opponentTrapAversion: ' + adjustment +  ' for oppGain: ' + opponentGain + ' oppLoss: ' + opponentLoss)
-      }
-    }
-    return score + relativeScore
-  }, 0) / (options.nextMoves.length || 1)
-
-  return {
-    score: absScore * options.context.game.player,
-    absScore: absScore
+  // Sort nextMoves best to worst from the perspective of the player whose turn it was at that level
+  if (options.context.turn !== options.context.player) {
+    options.nextMoves.sort(sortByScoreDesc)
+  } else {
+    options.nextMoves.sort(sortByScoreAsc)
   }
+
+  var tweek = 0
+  if (options.context.player === 1) {
+    tweek = options.nextMoves.reduce(function (sum, move) {
+      var eval = (move.predictiveEval || move.staticEval)
+      sum += eval.absScore
+      return sum
+    }, 0) / (options.nextMoves.length || 1) / 100
+  }
+
+  var bestNextMove = options.nextMoves[0] || {staticEval: options.move.staticEval, path: options.move.path}
+  var bestNextEval = bestNextMove.predictiveEval || bestNextMove.staticEval
+
+  var eval = {
+    score: bestNextEval.score,
+    absScore: bestNextEval.absScore + tweek,
+    path: bestNextEval.path || bestNextMove.path
+  }
+  if (options.move) {
+    options.move.predictiveEval = eval
+  }
+  return eval
+}
+
+function sortByScoreDesc (a, b) {
+  var aEval = a.predictiveEval || a.staticEval
+  var bEval = b.predictiveEval || b.staticEval
+  if (aEval.absScore < bEval.absScore) return 1
+  if (aEval.absScore > bEval.absScore) return -1
+  return 0
+}
+
+function sortByScoreAsc (a, b) {
+  var aEval = a.predictiveEval || a.staticEval
+  var bEval = b.predictiveEval || b.staticEval
+  if (aEval.absScore < bEval.absScore) return -1
+  if (aEval.absScore > bEval.absScore) return 1
+  return 0
 }
