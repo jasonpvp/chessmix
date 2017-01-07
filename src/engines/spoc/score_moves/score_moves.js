@@ -27,6 +27,21 @@
 
 var analyze = require('../tactics/analyze')
 var Tactics = require('../tactics')
+var ffi = require('ffi')
+var ref = require('ref')
+var path = require('path')
+
+var crusty = ffi.Library(path.join(__dirname, '../../../../crusty/target/release/libcrusty'), {
+  score_moves: ['int32', ['string', 'pointer']],
+  thread_id: ['int32', []]
+})
+
+var callback = ffi.Callback('void', ['int32'], function (result) {
+  console.log(Object.keys(crusty).join(', '))
+  console.log('result from ' + crusty.thread_id() + ' = ' + result)
+})
+
+crusty.score_moves('fen string', callback)
 
 module.exports = function ScoreMoves (options) {
   return scoreMoves(options)

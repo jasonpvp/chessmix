@@ -1,0 +1,13 @@
+[package]
+
+name = "crusty"
+version = "0.0.1"
+authors = ["jasonpvp@gmail.com"]
+
+[lib]
+name = "crusty"
+crate-type = ["dylib"]
+
+[dependencies]
+libc = "*"
+thread-id = "2.0.0"
