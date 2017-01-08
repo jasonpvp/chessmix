@@ -40,7 +40,7 @@ var callback = ffi.Callback('void', ['string'], function (scoredMoveJson) {
   console.log('Scored move: ' + JSON.stringify(scoredMove))
 })
 
-var threadId = crusty.score_moves('pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', callback)
+var threadId = crusty.score_moves('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', callback)
 console.log('threadId = ' + threadId)
 
 module.exports = function ScoreMoves (options) {

@@ -7,6 +7,7 @@ use std::str;
 use std::ffi::CString;
 
 use scored_move as scored_move;
+use chess;
 use fen_parser;
 
 #[no_mangle]
@@ -18,7 +19,7 @@ pub extern fn score_moves(fen: *const c_char, score_move_callback: extern fn(*co
 
   let fen_str = c_str.to_str().unwrap().to_string();
   let board = fen_parser::board_from_fen(fen_str);
-  println!("first cell: {}", board.cells[0][0]);
+  println!("board string: {}", chess::board_to_ascii(board));
 
   let smove = scored_move::ScoredMove {
     simple_move: "a1b1".to_string(),
