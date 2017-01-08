@@ -32,16 +32,16 @@ var ref = require('ref')
 var path = require('path')
 
 var crusty = ffi.Library(path.join(__dirname, '../../../../crusty/target/release/libcrusty'), {
-  score_moves: ['int32', ['string', 'pointer']],
-  thread_id: ['int32', []]
+  score_moves: ['int32', ['string', 'pointer']]
 })
 
-var callback = ffi.Callback('void', ['int32'], function (result) {
-  console.log(Object.keys(crusty).join(', '))
-  console.log('result from ' + crusty.thread_id() + ' = ' + result)
+var callback = ffi.Callback('void', ['string'], function (scoredMoveJson) {
+  var scoredMove = JSON.parse(scoredMoveJson)
+  console.log('Scored move: ' + JSON.stringify(scoredMove))
 })
 
-crusty.score_moves('fen string', callback)
+var threadId = crusty.score_moves('fen string', callback)
+console.log('threadId = ' + threadId)
 
 module.exports = function ScoreMoves (options) {
   return scoreMoves(options)
