@@ -12,3 +12,4 @@ crate-type = ["dylib"]
 libc = "*"
 thread-id = "2.0.0"
 rustc-serialize = "0.3.22"
+ndarray = "0.7.2"

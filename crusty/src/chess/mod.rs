@@ -1,3 +1,3 @@
 pub struct Board {
-  pub cells: [[i32; 8]; 8]
+  pub cells: Vec<Vec<i32>>
 }

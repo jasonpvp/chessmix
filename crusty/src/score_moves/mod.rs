@@ -1,14 +1,13 @@
 extern crate libc;
 extern crate thread_id;
-extern crate rustc_serialize;
 
-use libc::{c_char};
+use self::libc::{c_char};
 use std::ffi::CStr;
 use std::str;
 use std::ffi::CString;
 
-mod scored_move;
-//mod fen_parser;
+use scored_move as scored_move;
+use fen_parser;
 
 #[no_mangle]
 pub extern fn score_moves(fen: *const c_char, score_move_callback: extern fn(*const c_char)) -> usize {
@@ -17,9 +16,9 @@ pub extern fn score_moves(fen: *const c_char, score_move_callback: extern fn(*co
       CStr::from_ptr(fen)
   };
 
-  let fen_str = c_str.to_str().unwrap();
-//  let board = fen_parser::board_from_fen(fen_str);
-//  println!("first cell: {}", board.cells[0][0]);
+  let fen_str = c_str.to_str().unwrap().to_string();
+  let board = fen_parser::board_from_fen(fen_str);
+  println!("first cell: {}", board.cells[0][0]);
 
   let smove = scored_move::ScoredMove {
     simple_move: "a1b1".to_string(),
