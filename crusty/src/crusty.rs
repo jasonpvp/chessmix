@@ -8,6 +8,7 @@ use std::str;
 use std::ffi::CString;
 
 mod scored_move;
+//mod fen_parser;
 
 #[no_mangle]
 pub extern fn score_moves(fen: *const c_char, score_move_callback: extern fn(*const c_char)) -> usize {
@@ -16,8 +17,10 @@ pub extern fn score_moves(fen: *const c_char, score_move_callback: extern fn(*co
       CStr::from_ptr(fen)
   };
 
-  let r_str = c_str.to_str().unwrap();
-  // r_str.chars().count() as int32_t
+  let fen_str = c_str.to_str().unwrap();
+//  let board = fen_parser::board_from_fen(fen_str);
+//  println!("first cell: {}", board.cells[0][0]);
+
   let smove = scored_move::ScoredMove {
     simple_move: "a1b1".to_string(),
     static_eval: scored_move::Eval {
@@ -34,8 +37,8 @@ pub extern fn score_moves(fen: *const c_char, score_move_callback: extern fn(*co
     }
   };
 
-  let c_str = CString::new(scored_move::serialize(smove).to_string()).unwrap();
-  score_move_callback(c_str.into_raw());
+  let scored_move_str = CString::new(scored_move::serialize(smove).to_string()).unwrap();
+  score_move_callback(scored_move_str.into_raw());
   thread_id::get()
 }
 
