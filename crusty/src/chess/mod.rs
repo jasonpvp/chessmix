@@ -1,5 +1,18 @@
+use std::collections::LinkedList;
+mod pieces;
+
 pub struct Board {
-  pub cells: Vec<Vec<i32>>
+  pub cells: Vec<Vec<i32>>,
+  moves: Vec<Move>
+}
+
+struct Move {
+  pub from_cell: [i32; 2],
+  pub to_cell: [i32, 2]
+  pub fn to_string(&self) -> String {
+    let s = format!("{}{}", self.from_cell, self.to_cell);
+    s
+  }
 }
 
 pub fn board_to_ascii(board: Board) -> String {
@@ -32,3 +45,36 @@ fn piece_code(piece_value: &i32) -> char {
     _ => '.'
   }
 }
+
+pub fn board_moves(board Board) -> &LinkedList {
+  let mut moves = LinkedList::new()
+  for row in &board.cells.iter() {
+    for cell in &row.iter() {
+      moves.append(piece_moves(board, *cell));
+    }
+  }
+
+  &moves
+}
+
+fn piece_moves(board: Board, piece_value: i32) -> fn() -> &LinkedList {
+  let piece_mover = match *piece_value {
+    -1 => pieces::pawn,
+    -2 => pieces::knight,
+    -3 => pieces::bishop,
+    -4 => pieces::rook,
+    -5 => pieces::queen,
+    -6 => pieces::king,
+    1 => pieces::pawn,
+    2 => pieces::knight,
+    3 => pieces::bishop,
+    4 => pieces::rook,
+    5 => pieces::queen,
+    6 => pieces::king,
+    _ => fn () -> None { None }
+  };
+  let result = piece_mover::get_moves(board, piece_value);
+  result
+}
+
+
