@@ -1,4 +1,4 @@
-use chess as chess;
+use ::chess;
 
 // Given a fen string, such as: "pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 // returns a Board in the state represented by the string
@@ -6,7 +6,8 @@ pub fn board_from_fen (fen_str: String) -> chess::Board {
   let mut parts = fen_str.split_whitespace();
 
   chess::Board {
-    cells: fen_cells(parts.next().unwrap())
+    cells: fen_cells(parts.next().unwrap()),
+    moves: Vec::new()
   }
 }
 

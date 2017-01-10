@@ -1,24 +1,20 @@
-use std::collections::LinkedList;
 mod pieces;
 
 pub struct Board {
   pub cells: Vec<Vec<i32>>,
-  moves: Vec<Move>
+  pub moves: Vec<Move>
 }
 
-struct Move {
+pub struct Move {
   pub from_cell: [i32; 2],
-  pub to_cell: [i32, 2]
-  pub fn to_string(&self) -> String {
-    let s = format!("{}{}", self.from_cell, self.to_cell);
-    s
-  }
+  pub to_cell: [i32; 2],
 }
 
 pub fn board_to_ascii(board: Board) -> String {
-  let ascii: String = board.cells.iter().fold("".to_owned(), |mut str: String, row: &Vec<i32>| {
+  let cells_slice = &board.cells;
+  let ascii: String = cells_slice.iter().fold("".to_owned(), |mut str: String, row: &Vec<i32>| {
     let row_str = row.iter().fold("".to_owned(), |mut rstr: String, val: &i32| {
-      rstr = format!("{}{} ", rstr, piece_code(val));
+      rstr = format!("{}{} ", rstr, piece_code(*val));
       rstr
     });
     str = format!("{}\n{}", str, row_str);
@@ -27,8 +23,8 @@ pub fn board_to_ascii(board: Board) -> String {
   ascii
 }
 
-fn piece_code(piece_value: &i32) -> char {
-  match *piece_value {
+fn piece_code(piece_value: i32) -> char {
+  match piece_value {
     -1 => 'p',
     -2 => 'n',
     -3 => 'b',
@@ -46,35 +42,39 @@ fn piece_code(piece_value: &i32) -> char {
   }
 }
 
-pub fn board_moves(board Board) -> &LinkedList {
-  let mut moves = LinkedList::new()
-  for row in &board.cells.iter() {
-    for cell in &row.iter() {
-      moves.append(piece_moves(board, *cell));
+pub fn board_moves(board: Board) -> Vec<Move> {
+  let mut moves = Vec::new();
+  let cells_slice = &board.cells;
+  for row in cells_slice.iter() {
+    for cell in row.iter() {
+      let new_moves = piece_moves(&board, *cell);
+      moves.extend(new_moves);
     }
   }
 
-  &moves
+  moves
 }
 
-fn piece_moves(board: Board, piece_value: i32) -> fn() -> &LinkedList {
-  let piece_mover = match *piece_value {
-    -1 => pieces::pawn,
-    -2 => pieces::knight,
-    -3 => pieces::bishop,
-    -4 => pieces::rook,
-    -5 => pieces::queen,
-    -6 => pieces::king,
-    1 => pieces::pawn,
-    2 => pieces::knight,
-    3 => pieces::bishop,
-    4 => pieces::rook,
-    5 => pieces::queen,
-    6 => pieces::king,
-    _ => fn () -> None { None }
+fn piece_moves(board: &Board, piece_value: i32) -> Vec<Move> {
+  let piece_mover = match piece_value {
+    -1 => pieces::pawn::get_moves,
+    -2 => pieces::knight::get_moves,
+    -3 => pieces::bishop::get_moves,
+    -4 => pieces::rook::get_moves,
+    -5 => pieces::queen::get_moves,
+    -6 => pieces::king::get_moves,
+    1 => pieces::pawn::get_moves,
+    2 => pieces::knight::get_moves,
+    3 => pieces::bishop::get_moves,
+    4 => pieces::rook::get_moves,
+    5 => pieces::queen::get_moves,
+    6 => pieces::king::get_moves,
+    _ => null_piece_moves
   };
-  let result = piece_mover::get_moves(board, piece_value);
+  let result = piece_mover(board, piece_value);
   result
 }
 
-
+fn null_piece_moves (board: &Board, piece_value: i32) -> Vec<Move> {
+  vec![]
+}
