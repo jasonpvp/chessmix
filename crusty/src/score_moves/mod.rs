@@ -6,7 +6,6 @@ use std::ffi::CStr;
 use std::str;
 use std::ffi::CString;
 
-use scored_move as scored_move;
 use chess;
 use fen_parser;
 
@@ -21,15 +20,21 @@ pub extern fn score_moves(fen: *const c_char, score_move_callback: extern fn(*co
   let board = fen_parser::board_from_fen(fen_str);
   println!("board string: {}", chess::board_to_ascii(board));
 
-  let smove = scored_move::ScoredMove {
-    simple_move: "a1b1".to_string(),
-    static_eval: scored_move::Eval {
+  let smove = chess::scored_move::ScoredMove {
+    move_info: chess::Move {
+      from_cell: [0, 1],
+      to_cell: [3, 2],
+      piece_value: 3,
+      valid: false
+    },
+    topology: chess::scored_move::BoardTopology::new(),
+    static_eval: chess::scored_move::Eval {
       score: 1,
       abs_score: 1,
       abs_delta: 1,
       path: "path".to_string()
     },
-    predictive_eval: scored_move::Eval {
+    predictive_eval: chess::scored_move::Eval {
       score: 1,
       abs_score: 1,
       abs_delta: 1,
@@ -37,7 +42,7 @@ pub extern fn score_moves(fen: *const c_char, score_move_callback: extern fn(*co
     }
   };
 
-  let scored_move_str = CString::new(scored_move::serialize(smove).to_string()).unwrap();
+  let scored_move_str = CString::new(chess::scored_move::serialize(smove).to_string()).unwrap();
   score_move_callback(scored_move_str.into_raw());
   thread_id::get()
 }

@@ -1,9 +1,23 @@
 use rustc_serialize::json::{self};
+use ::chess;
 
 pub struct ScoredMove {
-  pub simple_move: String,
+  pub move_info: chess::Move,
+  pub topology: BoardTopology,
   pub static_eval: Eval,
   pub predictive_eval: Eval
+}
+
+pub struct BoardTopology {
+  pub cells: Vec<Vec<Vec<i32>>>
+}
+
+impl BoardTopology {
+  pub fn new () -> BoardTopology {
+    BoardTopology {
+      cells: vec![vec![vec![0; 12]; 8]; 8]
+    }
+  }
 }
 
 pub struct Eval {
@@ -11,6 +25,11 @@ pub struct Eval {
   pub abs_score: i32,
   pub abs_delta: i32,
   pub path: String
+}
+
+#[derive(RustcEncodable)]
+struct BoardTopologyRecord {
+  cells: Vec<Vec<Vec<i32>>>
 }
 
 #[derive(RustcEncodable)]
@@ -28,9 +47,13 @@ struct EvalRecord {
   path: String
 }
 
+fn num_to_char(n: usize) -> char {
+  (n + 97) as u8 as char
+}
+
 pub fn serialize(scored_move: ScoredMove) -> String {
   let data: String = json::encode(&ScoredMoveRecord {
-    simple_move: scored_move.simple_move,
+    simple_move: format!("{}{}{}{}", num_to_char(scored_move.move_info.from_cell[0]), scored_move.move_info.from_cell[1], num_to_char(scored_move.move_info.to_cell[0]), scored_move.move_info.to_cell[1]),
     static_eval: EvalRecord {
       score: scored_move.static_eval.score,
       abs_score: scored_move.static_eval.abs_score,
