@@ -17,7 +17,28 @@ pub extern fn score_moves(fen: *const c_char, score_move_callback: extern fn(*co
   };
 
   let fen_str = c_str.to_str().unwrap().to_string();
-  let board = fen_parser::board_from_fen(fen_str);
+  let mut board = fen_parser::board_from_fen(fen_str);
+  board.moves = chess::board_moves(&board).iter().fold(vec![], |mut scored_moves, move_info| {
+    let scored_move = chess::scored_move::ScoredMove {
+      move_info: *move_info,
+      topology: chess::scored_move::BoardTopology::new(),
+      static_eval: chess::scored_move::Eval {
+        score: 1,
+        abs_score: 1,
+        abs_delta: 1,
+        path: "path".to_string()
+      },
+      predictive_eval: chess::scored_move::Eval {
+        score: 1,
+        abs_score: 1,
+        abs_delta: 1,
+        path: "path".to_string()
+      }
+    };
+    scored_moves.push(scored_move);
+    scored_moves
+  });
+
   println!("board string: {}", chess::board_to_ascii(board));
 
   let smove = chess::scored_move::ScoredMove {

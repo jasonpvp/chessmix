@@ -6,6 +6,7 @@ pub struct Board {
   pub moves: Vec<scored_move::ScoredMove>
 }
 
+#[derive(Copy, Clone)]
 pub struct Move {
   pub from_cell: [usize; 2],
   pub to_cell: [usize; 2],
@@ -45,14 +46,14 @@ fn piece_code(piece_value: i32) -> char {
   }
 }
 
-pub fn board_moves(board: Board) -> Vec<Move> {
+pub fn board_moves(board: &Board) -> Vec<Move> {
   let mut moves = Vec::new();
-  let cells_slice = &board.cells;
+  let ref cells_slice = board.cells;
   let mut i = 0;
   let mut j = 0;
   for row in cells_slice.iter() {
     for cell in row.iter() {
-      let new_moves = piece_moves(&board, *cell, [i, j]);
+      let new_moves = piece_moves(board, *cell, [i, j]);
       moves.extend(new_moves);
       j = j + 1;
     }
@@ -79,8 +80,7 @@ fn piece_moves(board: &Board, piece_value: i32, cell: [usize; 2]) -> Vec<Move> {
     6 => pieces::king::get_moves,
     _ => null_piece_moves
   };
-  let result = piece_mover(board, piece_value, cell);
-  result
+  piece_mover(board, piece_value, cell)
 }
 
 fn null_piece_moves (board: &Board, piece_value: i32, cell: [usize; 2]) -> Vec<Move> {
