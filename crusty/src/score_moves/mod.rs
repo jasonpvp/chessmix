@@ -20,6 +20,7 @@ pub extern fn score_moves(fen: *const c_char, score_move_callback: extern fn(*co
   let context = chess::Context {
     depth: 0,
     max_depth: 3,
+    player: 1,
     turn: 1
   };
 

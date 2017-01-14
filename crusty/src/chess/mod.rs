@@ -1,4 +1,5 @@
 mod pieces;
+use std;
 pub mod scored_move;
 
 pub struct Board {
@@ -19,6 +20,7 @@ impl Board {
 pub struct Context {
   pub depth: i32,
   pub max_depth: i32,
+  pub player: i32,
   pub turn: i32
 }
 
@@ -63,8 +65,17 @@ pub fn get_moves(board: &Board, context: &Context) -> Vec<Move> {
 
 pub fn get_best_move(board: &Board, moves: &Vec<Move>, context: Context) -> scored_move::ScoredMove {
   let mut scored_moves = get_scored_moves(board, moves, context);
-  scored_moves.sort_by(|a, b| b.eval.abs_score.cmp(&a.eval.abs_score));
+  let sorter = if context.player == context.turn { sort_descending } else { sort_ascending };
+  scored_moves.sort_by(sorter);
   scored_moves[0].clone()
+}
+
+fn sort_ascending(a: &scored_move::ScoredMove, b: &scored_move::ScoredMove) -> std::cmp::Ordering {
+  a.eval.abs_score.cmp(&b.eval.abs_score)
+}
+
+fn sort_descending(a: &scored_move::ScoredMove, b: &scored_move::ScoredMove) -> std::cmp::Ordering {
+  b.eval.abs_score.cmp(&a.eval.abs_score)
 }
 
 pub fn get_scored_moves(board: &Board, moves: &Vec<Move>, context: Context) -> Vec<scored_move::ScoredMove> {
@@ -80,6 +91,7 @@ pub fn get_scored_moves(board: &Board, moves: &Vec<Move>, context: Context) -> V
     let next_context = Context {
       depth: context.depth + 1,
       max_depth: context.max_depth,
+      player: context.player,
       turn: if context.turn == 1 { -1 } else { 1 }
     };
     moves.iter().fold(vec![], |mut scored_moves, move_info| {
