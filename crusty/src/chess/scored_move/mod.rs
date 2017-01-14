@@ -1,11 +1,10 @@
 use rustc_serialize::json::{self};
 use ::chess;
 
+#[derive(Clone)]
 pub struct ScoredMove {
   pub move_info: chess::Move,
-  pub topology: BoardTopology,
-  pub static_eval: Eval,
-  pub predictive_eval: Eval
+  pub eval: Eval
 }
 
 pub struct BoardTopology {
@@ -20,6 +19,7 @@ impl BoardTopology {
   }
 }
 
+#[derive(Clone)]
 pub struct Eval {
   pub score: i32,
   pub abs_score: i32,
@@ -27,16 +27,15 @@ pub struct Eval {
   pub path: String
 }
 
-#[derive(RustcEncodable)]
-struct BoardTopologyRecord {
-  cells: Vec<Vec<Vec<i32>>>
-}
+//#[derive(RustcEncodable)]
+//struct BoardTopologyRecord {
+//  cells: Vec<Vec<Vec<i32>>>
+//}
 
 #[derive(RustcEncodable)]
 struct ScoredMoveRecord {
   simple_move: String,
-  static_eval: EvalRecord,
-  predictive_eval: EvalRecord
+  eval: EvalRecord
 }
 
 #[derive(RustcEncodable)]
@@ -53,21 +52,50 @@ fn num_to_char(n: usize) -> char {
 
 pub fn serialize(scored_move: ScoredMove) -> String {
   let data: String = json::encode(&ScoredMoveRecord {
-    simple_move: format!("{}{}{}{}", num_to_char(scored_move.move_info.from_cell[0]), scored_move.move_info.from_cell[1], num_to_char(scored_move.move_info.to_cell[0]), scored_move.move_info.to_cell[1]),
-    static_eval: EvalRecord {
-      score: scored_move.static_eval.score,
-      abs_score: scored_move.static_eval.abs_score,
-      abs_delta: scored_move.static_eval.abs_delta,
-      path: scored_move.static_eval.path,
-    },
-    predictive_eval: EvalRecord {
-      score: scored_move.predictive_eval.score,
-      abs_score: scored_move.predictive_eval.abs_score,
-      abs_delta: scored_move.predictive_eval.abs_delta,
-      path: scored_move.predictive_eval.path,
+    simple_move: format!("{}{}{}{}", num_to_char(scored_move.move_info.from_cell[1]), scored_move.move_info.from_cell[0] + 1, num_to_char(scored_move.move_info.to_cell[1]), scored_move.move_info.to_cell[0] + 1),
+    eval: EvalRecord {
+      score: scored_move.eval.score,
+      abs_score: scored_move.eval.abs_score,
+      abs_delta: scored_move.eval.abs_delta,
+      path: scored_move.eval.path,
     }
   }).unwrap();
 
   data
 }
 
+pub fn get_scored_move(move_info: &chess::Move, topology: &BoardTopology) -> ScoredMove {
+  ScoredMove {
+    move_info: *move_info,
+    eval: chess::scored_move::Eval {
+      score: 1,
+      abs_score: 1,
+      abs_delta: 1,
+      path: "path".to_string()
+    }
+  }
+}
+
+pub fn make_scored_move(move_info: &chess::Move, eval: Eval) -> ScoredMove {
+  ScoredMove {
+    move_info: *move_info,
+    eval: chess::scored_move::Eval {
+      score: 1,
+      abs_score: 1,
+      abs_delta: 1,
+      path: "path".to_string()
+    }
+  }
+
+}
+
+pub fn get_board_topology(moves: &Vec<chess::Move>) -> BoardTopology {
+  let topo_cells = moves.iter().fold(vec![vec![vec![0; 12]; 8]; 8], |mut cells, move_info| {
+    let piece_index = (move_info.piece_value + 6) as usize;
+    cells[move_info.to_cell[0]][move_info.to_cell[1]][piece_index] += 1;
+    cells
+  });
+  BoardTopology {
+    cells: topo_cells
+  }
+}

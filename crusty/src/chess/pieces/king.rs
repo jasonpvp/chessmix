@@ -1,6 +1,6 @@
 use ::chess;
 
-pub fn get_moves(board: &chess::Board, piece_value: i32, cell: [usize; 2]) -> Vec<chess::Move> {
+pub fn get_moves(board: &chess::Board, piece_value: i32, piece_turn: bool, cell: [usize; 2]) -> Vec<chess::Move> {
   let mut moves = Vec::new();
   for i in -1..1 {
     for j in -1..1 {
@@ -9,12 +9,12 @@ pub fn get_moves(board: &chess::Board, piece_value: i32, cell: [usize; 2]) -> Ve
         let jj = cell[1] + j as usize;
         if ii <= 7 && jj <= 7 {
           let occupied = board.cells[ii][jj] != 0;
-          let other = chess::pieces::comp::same_color(piece_value, board.cells[ii][jj]);
+          let other = !chess::pieces::comp::same_color(piece_value, board.cells[ii][jj]);
           moves.push(chess::Move {
             from_cell: cell,
             to_cell: [ii, jj],
             piece_value: piece_value,
-            valid: other || !occupied
+            valid: piece_turn && (other || !occupied)
           });
         }
       }

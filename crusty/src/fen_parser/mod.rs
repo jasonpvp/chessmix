@@ -4,11 +4,9 @@ use ::chess;
 // returns a Board in the state represented by the string
 pub fn board_from_fen (fen_str: String) -> chess::Board {
   let mut parts = fen_str.split_whitespace();
-
-  chess::Board {
-    cells: fen_cells(parts.next().unwrap()),
-    moves: Vec::new()
-  }
+  let cells = fen_cells(parts.next().unwrap());
+  let mut board = chess::Board::new(cells);
+  board
 }
 
 fn fen_cells (fen_str_cells: &str) -> Vec<Vec<i32>> {
