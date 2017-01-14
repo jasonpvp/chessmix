@@ -72,7 +72,7 @@ pub fn get_scored_moves(board: &Board, moves: &Vec<Move>, context: Context) -> V
     moves.iter().fold(vec![], |mut scored_moves, move_info| {
       if move_info.valid {
         let m = move_info;
-        scored_moves.push(scored_move::get_scored_move(move_info, &board.topology));
+        scored_moves.push(scored_move::get_scored_move(move_info, &board, &context));
       }
       scored_moves
     })

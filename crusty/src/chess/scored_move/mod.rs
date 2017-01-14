@@ -64,29 +64,35 @@ pub fn serialize(scored_move: ScoredMove) -> String {
   data
 }
 
-pub fn get_scored_move(move_info: &chess::Move, topology: &BoardTopology) -> ScoredMove {
+pub fn get_scored_move(move_info: &chess::Move, board: &chess::Board, context: &chess::Context) -> ScoredMove {
+  let score = piece_score(&board.cells);
   ScoredMove {
     move_info: *move_info,
     eval: chess::scored_move::Eval {
-      score: 1,
-      abs_score: 1,
+      score: score,
+      abs_score: score * context.turn,
       abs_delta: 1,
       path: "path".to_string()
     }
   }
 }
 
+fn piece_score (cells: &Vec<Vec<i32>>) -> i32 {
+  let ref cells_slice = cells;
+  let mut ttl = 0 as i32;
+  for row in cells_slice.iter() {
+    for cell in row.iter() {
+      ttl += *cell;
+    }
+  }
+  ttl
+}
+
 pub fn make_scored_move(move_info: &chess::Move, eval: Eval) -> ScoredMove {
   ScoredMove {
     move_info: *move_info,
-    eval: chess::scored_move::Eval {
-      score: 1,
-      abs_score: 1,
-      abs_delta: 1,
-      path: "path".to_string()
-    }
+    eval: eval
   }
-
 }
 
 pub fn get_board_topology(moves: &Vec<chess::Move>) -> BoardTopology {
