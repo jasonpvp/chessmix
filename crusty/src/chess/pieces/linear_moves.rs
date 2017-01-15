@@ -23,13 +23,13 @@ pub fn get_moves(board: &chess::Board, piece_value: i32, piece_turn: bool, cell:
       capture_value: if capture { (board.cells[ii][jj]).abs() } else { 0 }
     });
 
-    done = is_done(occupied, i, j);
     i += dir[0];
     j += dir[1];
+    done = is_done(occupied, i, j);
   }
   moves
 }
 
 fn is_done(occupied: bool, i: i32, j: i32) -> bool {
-  occupied || i <= 0 || i >= 7 || j <= 0 || j >= 7
+  occupied || i < 0 || i > 7 || j < 0 || j > 7
 }

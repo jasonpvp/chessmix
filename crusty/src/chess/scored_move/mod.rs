@@ -73,7 +73,7 @@ fn path_str(path: Vec<[[usize; 2]; 2]>) -> String {
 }
 
 pub fn get_scored_move(move_info: &chess::Move, board: &chess::Board, context: &chess::Context) -> ScoredMove {
-  let score = piece_score(&board.cells, context);
+  let score = piece_score(&board.cells, context) + get_topology_score(board, context);
   let mut path = context.path.to_owned();
   path.push([move_info.from_cell, move_info.to_cell]);
   ScoredMove {
@@ -134,4 +134,26 @@ fn piece_weight(piece_value: i32, depth: i32) -> i32 {
     0 => 0,
     _ => 0
   }
+}
+
+fn get_topology_score(board: &chess::Board, context: &chess::Context) -> i32 {
+  let mut score = 0;
+  for (i, row) in board.topology.cells.iter().enumerate() {
+    for (j, cell) in row.iter().enumerate() {
+      let piece_value = board.cells[i][j];
+      if piece_value != 0 {
+        let mut cover_score = 0;
+        let mut cover_count = 0;
+        for (val, count) in cell.iter().enumerate() {
+          let cover_value = val as i32 - 6;
+          cover_score += cover_value;
+          if cover_value < 0 {cover_count -= 1} else {cover_count += 1}
+        }
+        // This is a crappy proxy for a more complicated calculation
+        let piece_cover = piece_weight(piece_value, 1) * cover_count;
+        score += piece_cover;
+      }
+    }
+  }
+  (score * context.player)
 }

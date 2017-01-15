@@ -53,9 +53,9 @@ var callback = ffi.Callback('void', ['string'], function (scoredMoveJson) {
 // sacrifice queen for checkmate in 2
 //var fen = 'rnbqkb1r/pppppppp/7n/8/2B1PQ2/5R2/PPPP1PPP/RNB1K1N1 w KQkq - 0 1'
 // avoid bad capture (requires check awareness and 4-move look ahead)
-//var fen = 'rnbqk1nr/pppp1pp1/4pb2/7p/8/1PNPP3/P1P2PPP/R1BQKBNR w KQkq - 0 1'
+var fen = 'rnbqk1nr/pppp1pp1/4pb2/7p/8/1PNPP3/P1P2PPP/R1BQKBNR w KQkq - 0 1'
 // avoid bad capture (requires only 2 move look ahead
-var fen = 'rnbqkbr1/1pppppp1/p6n/5B1p/8/4P3/PPPP1PPP/RNBQK1NR w KQkq - 0 1'
+//var fen = 'rnbqkbr1/1pppppp1/p6n/5B1p/8/4P3/PPPP1PPP/RNBQK1NR w KQkq - 0 1'
 var threadId = crusty.score_moves(fen, callback)
 console.log('threadId = ' + threadId)
 
