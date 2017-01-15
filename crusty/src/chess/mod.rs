@@ -1,6 +1,7 @@
 mod pieces;
 use std;
 pub mod scored_move;
+use std::time::{Duration, Instant};
 
 pub struct Board {
   pub cells: Vec<Vec<i32>>,
@@ -76,15 +77,27 @@ pub fn get_moves(board: &Board, context: &Context) -> Vec<Move> {
 }
 
 pub fn get_best_move(board: &Board, moves: &Vec<Move>, context: &Context) -> scored_move::ScoredMove {
+  let now = Instant::now();
   let null_move = Move { from_cell: [0, 0], to_cell: [0, 0], piece_value: 0, valid: false };
-  get_best_move_recurse(board, moves, context, &null_move)
+  let best_move = get_best_move_recurse(board, moves, context, &null_move);
+  println!("found best move in {}s", now.elapsed().as_secs());
+  best_move
 }
 
 fn get_best_move_recurse(board: &Board, moves: &Vec<Move>, context: &Context, prev_move: &Move) -> scored_move::ScoredMove {
-  let mut scored_moves = get_scored_moves(board, moves, &context, prev_move);
-  let sorter = if context.player == context.turn { sort_descending } else { sort_ascending };
-  scored_moves.sort_by(sorter);
-  scored_moves[0].clone()
+  if moves.len() == 0 {
+    scored_move::get_scored_move(prev_move, &board, &context)
+  } else {
+    let mut scored_moves = get_scored_moves(board, moves, &context, prev_move);
+    let sorter = if context.player == context.turn { sort_descending } else { sort_ascending };
+    scored_moves.sort_by(sorter);
+    if context.depth == 1 {
+      for m in scored_moves.iter() {
+        println!("{}", scored_move::serialize(m.clone()).to_string());
+      }
+    }
+    scored_moves[0].clone()
+  }
 }
 
 
@@ -110,14 +123,14 @@ pub fn get_scored_moves(board: &Board, moves: &Vec<Move>, context: &Context, pre
   if context.depth == context.max_depth {
     moves.iter().fold(vec![], |mut scored_moves, move_info| {
       if move_info.valid {
-        let m = move_info;
-        scored_moves.push(scored_move::get_scored_move(move_info, &board, &next_context));
+        let mut next_board = Board::new(make_move(&board.cells, move_info));
+        scored_moves.push(scored_move::get_scored_move(move_info, &next_board, &next_context));
       }
       scored_moves
     })
   } else {
     moves.iter().fold(vec![], |mut scored_moves, move_info| {
-      if move_info.valid {// && move_info.to_cell[0] == 4 && move_info.to_cell[1] == 0 {
+      if move_info.valid {
         let mut next_board = Board::new(make_move(&board.cells, move_info));
         let next_moves = get_moves(&next_board, &next_context);
         next_board.topology = scored_move::get_board_topology(&next_moves);
@@ -127,6 +140,16 @@ pub fn get_scored_moves(board: &Board, moves: &Vec<Move>, context: &Context, pre
       scored_moves
     })
   }
+}
+
+fn match_move(m: &Move, f: [i32; 2], t: [i32; 2]) -> bool {
+  m.from_cell[0] == f[0] as usize && m.from_cell[1] == f[1] as usize && m.to_cell[0] == t[0] as usize && m.to_cell[1] == t[1] as usize
+}
+
+fn score_and_print_move(m: &Move, board: &Board, context: &Context) {
+  let mut next_board = Board::new(make_move(&board.cells, m));
+  let m = scored_move::get_scored_move(m, &next_board, &context);
+  println!("CHECKMATE at depth {}: {}", context.depth, scored_move::serialize(m.clone()).to_string());
 }
 
 pub fn make_move(cells: &Vec<Vec<i32>>, m: &Move) -> Vec<Vec<i32>> {

@@ -40,7 +40,19 @@ var callback = ffi.Callback('void', ['string'], function (scoredMoveJson) {
   console.log('Scored move: ' + JSON.stringify(scoredMove))
 })
 
-var threadId = crusty.score_moves('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', callback)
+// starting board
+// var fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+// test checkmate
+// var fen = 'rnbqkbnr/1ppppppp/8/8/p1B5/4PQ2/PPPP1PPP/RNB1K1NR w KQkq - 0 1'
+// avoid bad trade
+// var fen = 'rn1qkbnr/ppp1ppp1/3p4/7p/6b1/P1P1P3/1P1P1PPP/RNBQKBNR w KQkq - 0 1'
+// opponent challenges pieces
+// var fen = 'rn1qkbnr/ppp1ppp1/B2p4/7p/6b1/P1P1P3/1P1P1PPP/RNBQK1NR w KQkq - 0 1'
+// opponent takes piece
+//var fen = 'rnbqkbnr/ppp1pppp/8/3p4/2N1N3/8/PPPPPPPP/R1BQKB1R w KQkq - 0 1'
+// sacrifice queen for checkmate in 2
+var fen = 'rnbqkb1r/pppppppp/7n/8/2B1PQ2/5R2/PPPP1PPP/RNB1K1N1 w KQkq - 0 1'
+var threadId = crusty.score_moves(fen, callback)
 console.log('threadId = ' + threadId)
 
 module.exports = function ScoreMoves (options) {

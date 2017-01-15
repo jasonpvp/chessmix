@@ -73,7 +73,7 @@ fn path_str(path: Vec<[[usize; 2]; 2]>) -> String {
 }
 
 pub fn get_scored_move(move_info: &chess::Move, board: &chess::Board, context: &chess::Context) -> ScoredMove {
-  let score = piece_score(&board.cells);
+  let score = piece_score(&board.cells, context);
   let mut path = context.path.to_owned();
   path.push([move_info.from_cell, move_info.to_cell]);
   ScoredMove {
@@ -81,18 +81,18 @@ pub fn get_scored_move(move_info: &chess::Move, board: &chess::Board, context: &
     path: path,
     eval: chess::scored_move::Eval {
       score: score,
-      abs_score: score * context.turn,
+      abs_score: score * context.player,
       abs_delta: 1
     }
   }
 }
 
-fn piece_score (cells: &Vec<Vec<i32>>) -> i32 {
+fn piece_score (cells: &Vec<Vec<i32>>, context: &chess::Context) -> i32 {
   let ref cells_slice = cells;
   let mut ttl = 0 as i32;
   for row in cells_slice.iter() {
     for cell in row.iter() {
-      ttl += *cell;
+      ttl += piece_weight(*cell, context.depth);
     }
   }
   ttl
@@ -114,5 +114,24 @@ pub fn get_board_topology(moves: &Vec<chess::Move>) -> BoardTopology {
   });
   BoardTopology {
     cells: topo_cells
+  }
+}
+
+fn piece_weight(piece_value: i32, depth: i32) -> i32 {
+  match piece_value {
+    -1 => -1,
+    -2 => -2,
+    -3 => -3,
+    -4 => -4,
+    -5 => -10,
+    -6 => -10000000 / depth,
+    1 => 1,
+    2 => 2,
+    3 => 3,
+    4 => 4,
+    5 => 10,
+    6 => 10000000 / depth,
+    0 => 0,
+    _ => 0
   }
 }

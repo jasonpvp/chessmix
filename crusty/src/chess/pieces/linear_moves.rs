@@ -4,13 +4,14 @@ pub fn get_moves(board: &chess::Board, piece_value: i32, piece_turn: bool, cell:
   let mut moves = Vec::new();
   let mut i = cell[0] as i32 + dir[0];
   let mut j = cell[1] as i32 + dir[1];
-  let mut done = is_done(false, i, j);
+  let mut done = i < 0 || i > 7 || j < 0 || j > 7;
 
   while !done {
     let ii = i as usize;
     let jj = j as usize;
     let occupied = board.cells[ii][jj] != 0;
     let other = !chess::pieces::comp::same_color(piece_value, board.cells[ii][jj]);
+
     moves.push(chess::Move {
       from_cell: cell,
       to_cell: [ii, jj],
