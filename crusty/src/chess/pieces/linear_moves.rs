@@ -11,12 +11,16 @@ pub fn get_moves(board: &chess::Board, piece_value: i32, piece_turn: bool, cell:
     let jj = j as usize;
     let occupied = board.cells[ii][jj] != 0;
     let other = !chess::pieces::comp::same_color(piece_value, board.cells[ii][jj]);
+    let capture = occupied && other;
 
     moves.push(chess::Move {
       from_cell: cell,
       to_cell: [ii, jj],
       piece_value: piece_value,
-      valid: piece_turn && (other || !occupied)
+      valid: piece_turn && (other || !occupied),
+      capture: capture,
+      capture_diff: if capture { (board.cells[ii][jj]).abs() - piece_value.abs() } else { 0 },
+      capture_value: if capture { (board.cells[ii][jj]).abs() } else { 0 }
     });
 
     done = is_done(occupied, i, j);

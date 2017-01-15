@@ -2,6 +2,7 @@ mod pieces;
 use std;
 pub mod scored_move;
 use std::time::{Duration, Instant};
+extern crate time;
 
 pub struct Board {
   pub cells: Vec<Vec<i32>>,
@@ -18,6 +19,9 @@ impl Board {
 }
 
 pub struct Context {
+  pub start_time: i64,
+  pub max_duration: i64,
+  pub diff: i32,
   pub depth: i32,
   pub max_depth: i32,
   pub player: i32,
@@ -28,6 +32,9 @@ pub struct Context {
 impl Clone for Context {
   fn clone(&self) -> Context {
     Context {
+      start_time: self.start_time,
+      max_duration: self.max_duration,
+      diff: self.diff,
       depth: self.depth,
       max_depth: self.max_depth,
       player: self.player,
@@ -42,7 +49,10 @@ pub struct Move {
   pub from_cell: [usize; 2],
   pub to_cell: [usize; 2],
   pub piece_value: i32,
-  pub valid: bool
+  pub valid: bool,
+  pub capture: bool,
+  pub capture_value: i32,
+  pub capture_diff: i32
 }
 
 pub fn board_to_ascii(board: &Board) -> String {
@@ -73,12 +83,19 @@ pub fn get_moves(board: &Board, context: &Context) -> Vec<Move> {
     i = i + 1;
     j = 0;
   }
+  moves.sort_by(sort_by_capture_descending);
+//  if context.depth == 1 {
+//    for m in moves.iter() {
+//      println!("capture value: {} move piece: {}, move ({},{})-({},{}) valid: {}", m.capture_value, m.piece_value, m.from_cell[0], m.from_cell[1], m.to_cell[0], m.to_cell[1], m.valid);
+//    }
+//  }
+
   moves
 }
 
 pub fn get_best_move(board: &Board, moves: &Vec<Move>, context: &Context) -> scored_move::ScoredMove {
   let now = Instant::now();
-  let null_move = Move { from_cell: [0, 0], to_cell: [0, 0], piece_value: 0, valid: false };
+  let null_move = Move { from_cell: [0, 0], to_cell: [0, 0], piece_value: 0, valid: false, capture: false, capture_diff: 0, capture_value: 0 };
   let best_move = get_best_move_recurse(board, moves, context, &null_move);
   println!("found best move in {}s", now.elapsed().as_secs());
   best_move
@@ -100,27 +117,24 @@ fn get_best_move_recurse(board: &Board, moves: &Vec<Move>, context: &Context, pr
   }
 }
 
-
-fn sort_ascending(a: &scored_move::ScoredMove, b: &scored_move::ScoredMove) -> std::cmp::Ordering {
-  a.eval.abs_score.cmp(&b.eval.abs_score)
-}
-
-fn sort_descending(a: &scored_move::ScoredMove, b: &scored_move::ScoredMove) -> std::cmp::Ordering {
-  b.eval.abs_score.cmp(&a.eval.abs_score)
-}
-
 pub fn get_scored_moves(board: &Board, moves: &Vec<Move>, context: &Context, prev_move: &Move) -> Vec<scored_move::ScoredMove> {
   let mut next_path = context.path.to_owned();
   if prev_move.valid { next_path.push([prev_move.from_cell, prev_move.to_cell]) };
   let next_context = Context {
+    start_time: context.start_time,
+    max_duration: context.max_duration,
+    diff: context.diff + prev_move.capture_diff,
     depth: context.depth + 1,
     max_depth: context.max_depth,
     player: context.player,
     turn: if context.turn == 1 { -1 } else { 1 },
     path: next_path
   };
+  let search_duration = time::get_time().sec - context.start_time;
+//  let bad_move = next_context.diff < -2;
+//  let boring_path = next_context.diff == 0 && context.depth == 4;
 
-  if context.depth == context.max_depth {
+  if (context.depth == context.max_depth) || (search_duration > context.max_duration) {
     moves.iter().fold(vec![], |mut scored_moves, move_info| {
       if move_info.valid {
         let mut next_board = Board::new(make_move(&board.cells, move_info));
@@ -144,6 +158,24 @@ pub fn get_scored_moves(board: &Board, moves: &Vec<Move>, context: &Context, pre
 
 fn match_move(m: &Move, f: [i32; 2], t: [i32; 2]) -> bool {
   m.from_cell[0] == f[0] as usize && m.from_cell[1] == f[1] as usize && m.to_cell[0] == t[0] as usize && m.to_cell[1] == t[1] as usize
+}
+
+fn sort_ascending(a: &scored_move::ScoredMove, b: &scored_move::ScoredMove) -> std::cmp::Ordering {
+  a.eval.abs_score.cmp(&b.eval.abs_score)
+}
+
+fn sort_descending(a: &scored_move::ScoredMove, b: &scored_move::ScoredMove) -> std::cmp::Ordering {
+  b.eval.abs_score.cmp(&a.eval.abs_score)
+}
+
+fn sort_by_capture_descending(a: &Move, b: &Move) -> std::cmp::Ordering {
+  if a.valid && !b.valid {
+    0.cmp(&1)
+  } else if b.valid && !a.valid {
+    1.cmp(&0)
+  } else {
+    b.capture_value.cmp(&a.capture_value)
+  }
 }
 
 fn score_and_print_move(m: &Move, board: &Board, context: &Context) {

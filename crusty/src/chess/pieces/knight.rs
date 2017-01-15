@@ -24,10 +24,14 @@ fn get_move(board: &chess::Board, piece_value: i32, piece_turn: bool, from_cell:
   let j = to_cell[1];
   let occupied = board.cells[i][j] != 0;
   let other = !chess::pieces::comp::same_color(piece_value, board.cells[i][j]);
+  let capture = occupied && other;
   chess::Move {
     from_cell: from_cell,
     to_cell: to_cell,
     piece_value: piece_value,
-    valid: piece_turn && (other || !occupied)
+    valid: piece_turn && (other || !occupied),
+    capture: capture,
+    capture_diff: if capture { (board.cells[i][j]).abs() - piece_value.abs() } else { 0 },
+    capture_value: if capture { (board.cells[i][j]).abs() } else { 0 }
   }
 }
