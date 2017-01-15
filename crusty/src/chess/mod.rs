@@ -162,11 +162,11 @@ fn match_move(m: &Move, f: [i32; 2], t: [i32; 2]) -> bool {
 }
 
 fn sort_ascending(a: &scored_move::ScoredMove, b: &scored_move::ScoredMove) -> std::cmp::Ordering {
-  a.eval.abs_score.cmp(&b.eval.abs_score)
+  a.eval.abs_score.partial_cmp(&b.eval.abs_score).unwrap()
 }
 
 fn sort_descending(a: &scored_move::ScoredMove, b: &scored_move::ScoredMove) -> std::cmp::Ordering {
-  b.eval.abs_score.cmp(&a.eval.abs_score)
+  b.eval.abs_score.partial_cmp(&a.eval.abs_score).unwrap()
 }
 
 fn sort_by_capture_descending(a: &Move, b: &Move) -> std::cmp::Ordering {

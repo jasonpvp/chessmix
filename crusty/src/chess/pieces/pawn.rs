@@ -30,12 +30,15 @@ fn get_move(board: &chess::Board, piece_value: i32, piece_turn: bool, from_cell:
   let occupied = board.cells[i][j] != 0;
   let other = chess::pieces::comp::opposing_pieces(piece_value, board.cells[i][j]);
   let capture = occupied && other;
-
+  let valid = piece_turn && capture_required == capture && capture == occupied;
+  if valid && board.cells[i][j] == 5 && from_cell[0] == 6 && from_cell[1] == 5 && to_cell[0] == 5 && to_cell[1] == 5 {
+    println!("PAWN: valid: {}, cap_req: {}, capture: {}", valid, capture_required, capture);
+  }
   chess::Move {
     from_cell: from_cell,
     to_cell: to_cell,
     piece_value: piece_value,
-    valid: piece_turn && (!capture_required || capture_required && capture),
+    valid: valid,
     capture: capture,
     capture_diff: if capture { (board.cells[i][j]).abs() - piece_value.abs() } else { 0 },
     capture_value: if capture { (board.cells[i][j]).abs() } else { 0 }

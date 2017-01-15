@@ -22,9 +22,9 @@ impl BoardTopology {
 
 #[derive(Clone)]
 pub struct Eval {
-  pub score: i32,
-  pub abs_score: i32,
-  pub abs_delta: i32
+  pub score: f32,
+  pub abs_score: f32,
+  pub abs_delta: f32
 }
 
 //#[derive(RustcEncodable)]
@@ -41,9 +41,9 @@ struct ScoredMoveRecord {
 
 #[derive(RustcEncodable)]
 struct EvalRecord {
-  score: i32,
-  abs_score: i32,
-  abs_delta: i32
+  score: f32,
+  abs_score: f32,
+  abs_delta: f32
 }
 
 fn num_to_char(n: usize) -> char {
@@ -73,7 +73,9 @@ fn path_str(path: Vec<[[usize; 2]; 2]>) -> String {
 }
 
 pub fn get_scored_move(move_info: &chess::Move, board: &chess::Board, context: &chess::Context) -> ScoredMove {
-  let score = piece_score(&board.cells, context) + get_topology_score(board, context);
+//  let score = piece_score(&board.cells, context) + get_topology_score(board, context);
+  let score = get_topology_score(board, context);
+
   let mut path = context.path.to_owned();
   path.push([move_info.from_cell, move_info.to_cell]);
   ScoredMove {
@@ -81,13 +83,13 @@ pub fn get_scored_move(move_info: &chess::Move, board: &chess::Board, context: &
     path: path,
     eval: chess::scored_move::Eval {
       score: score,
-      abs_score: score * context.player,
-      abs_delta: 1
+      abs_score: score * context.player as f32,
+      abs_delta: 1.0
     }
   }
 }
 
-fn piece_score (cells: &Vec<Vec<i32>>, context: &chess::Context) -> i32 {
+fn piece_score (cells: &Vec<Vec<i32>>, context: &chess::Context) -> f32 {
   let ref cells_slice = cells;
   let mut ttl = 0 as i32;
   for row in cells_slice.iter() {
@@ -95,7 +97,7 @@ fn piece_score (cells: &Vec<Vec<i32>>, context: &chess::Context) -> i32 {
       ttl += piece_weight(*cell, context.depth);
     }
   }
-  ttl
+  ttl as f32
 }
 
 pub fn make_scored_move(move_info: &chess::Move, scored_move: &ScoredMove) -> ScoredMove {
@@ -136,24 +138,24 @@ fn piece_weight(piece_value: i32, depth: i32) -> i32 {
   }
 }
 
-fn get_topology_score(board: &chess::Board, context: &chess::Context) -> i32 {
-  let mut score = 0;
+fn get_topology_score(board: &chess::Board, context: &chess::Context) -> f32 {
+  let mut score = 0.0;
+  // This is a crappy proxy for a more complicated calculation
   for (i, row) in board.topology.cells.iter().enumerate() {
     for (j, cell) in row.iter().enumerate() {
       let piece_value = board.cells[i][j];
       if piece_value != 0 {
-        let mut cover_score = 0;
-        let mut cover_count = 0;
+        let mut cover_count = 0.0;
         for (val, count) in cell.iter().enumerate() {
-          let cover_value = val as i32 - 6;
-          cover_score += cover_value;
-          if cover_value < 0 {cover_count -= 1} else {cover_count += 1}
+          let cover_value = val as f32 - 6.0;
+          if cover_value != 0.0 {
+            cover_count += 10.0 / cover_value;
+          }
         }
-        // This is a crappy proxy for a more complicated calculation
-        let piece_cover = piece_weight(piece_value, 1) * cover_count;
+        let piece_cover = piece_weight(piece_value, 1) as f32 * cover_count;
         score += piece_cover;
       }
     }
   }
-  (score * context.player)
+  score * context.player as f32
 }
