@@ -23,7 +23,7 @@ fn get_move(board: &chess::Board, piece_value: i32, piece_turn: bool, from_cell:
   let i = to_cell[0];
   let j = to_cell[1];
   let occupied = board.cells[i][j] != 0;
-  let other = !chess::pieces::comp::same_color(piece_value, board.cells[i][j]);
+  let other = chess::pieces::comp::opposing_pieces(piece_value, board.cells[i][j]);
   let capture = occupied && other;
   chess::Move {
     from_cell: from_cell,

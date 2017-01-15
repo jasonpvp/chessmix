@@ -38,7 +38,7 @@ pub extern fn score_moves(fen: *const c_char, score_move_callback: extern fn(*co
   let best_move = chess::get_best_move(&board, &moves, &context);
 
   // Print out boards
-  println!("Current board: {}\n", chess::board_to_ascii(&board));
+  println!("\nOUTPUT\n\nCurrent board: {}\n", chess::board_to_ascii(&board));
   for (i, hop) in best_move.path.iter().enumerate() {
     let m = chess::Move {from_cell: hop[0], to_cell: hop[1], piece_value: 0 as i32, valid: true, capture: false, capture_diff: 0, capture_value: 0};
     board.cells = chess::make_move(&board.cells, &m);

@@ -9,7 +9,7 @@ pub fn get_moves(board: &chess::Board, piece_value: i32, piece_turn: bool, cell:
         let jj = cell[1] + j as usize;
         if ii <= 7 && jj <= 7 {
           let occupied = board.cells[ii][jj] != 0;
-          let other = !chess::pieces::comp::same_color(piece_value, board.cells[ii][jj]);
+          let other = chess::pieces::comp::opposing_pieces(piece_value, board.cells[ii][jj]);
           let capture = other && occupied;
           moves.push(chess::Move {
             from_cell: cell,

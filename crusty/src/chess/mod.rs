@@ -131,10 +131,11 @@ pub fn get_scored_moves(board: &Board, moves: &Vec<Move>, context: &Context, pre
     path: next_path
   };
   let search_duration = time::get_time().sec - context.start_time;
+  let out_of_time = search_duration > context.max_duration;
 //  let bad_move = next_context.diff < -2;
 //  let boring_path = next_context.diff == 0 && context.depth == 4;
 
-  if (context.depth == context.max_depth) || (search_duration > context.max_duration) {
+  if (context.depth == context.max_depth) || out_of_time {
     moves.iter().fold(vec![], |mut scored_moves, move_info| {
       if move_info.valid {
         let mut next_board = Board::new(make_move(&board.cells, move_info));
