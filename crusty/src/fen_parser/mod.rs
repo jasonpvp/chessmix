@@ -44,7 +44,7 @@ fn piece_value(piece_code: char) -> i32 {
     'B' => 3,
     'R' => 4,
     'Q' => 5,
-    'K' => 5,
+    'K' => 6,
     _ => 0
   }
 }

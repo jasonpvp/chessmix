@@ -16,12 +16,24 @@ impl Board {
   }
 }
 
-#[derive(Copy, Clone)]
 pub struct Context {
   pub depth: i32,
   pub max_depth: i32,
   pub player: i32,
-  pub turn: i32
+  pub turn: i32,
+  pub path: Vec<[[usize; 2]; 2]>
+}
+
+impl Clone for Context {
+  fn clone(&self) -> Context {
+    Context {
+      depth: self.depth,
+      max_depth: self.max_depth,
+      player: self.player,
+      turn: self.turn,
+      path: self.path.to_owned()
+    }
+  }
 }
 
 #[derive(Copy, Clone)]
@@ -63,12 +75,18 @@ pub fn get_moves(board: &Board, context: &Context) -> Vec<Move> {
   moves
 }
 
-pub fn get_best_move(board: &Board, moves: &Vec<Move>, context: Context) -> scored_move::ScoredMove {
-  let mut scored_moves = get_scored_moves(board, moves, context);
+pub fn get_best_move(board: &Board, moves: &Vec<Move>, context: &Context) -> scored_move::ScoredMove {
+  let null_move = Move { from_cell: [0, 0], to_cell: [0, 0], piece_value: 0, valid: false };
+  get_best_move_recurse(board, moves, context, &null_move)
+}
+
+fn get_best_move_recurse(board: &Board, moves: &Vec<Move>, context: &Context, prev_move: &Move) -> scored_move::ScoredMove {
+  let mut scored_moves = get_scored_moves(board, moves, &context, prev_move);
   let sorter = if context.player == context.turn { sort_descending } else { sort_ascending };
   scored_moves.sort_by(sorter);
   scored_moves[0].clone()
 }
+
 
 fn sort_ascending(a: &scored_move::ScoredMove, b: &scored_move::ScoredMove) -> std::cmp::Ordering {
   a.eval.abs_score.cmp(&b.eval.abs_score)
@@ -78,36 +96,40 @@ fn sort_descending(a: &scored_move::ScoredMove, b: &scored_move::ScoredMove) -> 
   b.eval.abs_score.cmp(&a.eval.abs_score)
 }
 
-pub fn get_scored_moves(board: &Board, moves: &Vec<Move>, context: Context) -> Vec<scored_move::ScoredMove> {
+pub fn get_scored_moves(board: &Board, moves: &Vec<Move>, context: &Context, prev_move: &Move) -> Vec<scored_move::ScoredMove> {
+  let mut next_path = context.path.to_owned();
+  if prev_move.valid { next_path.push([prev_move.from_cell, prev_move.to_cell]) };
+  let next_context = Context {
+    depth: context.depth + 1,
+    max_depth: context.max_depth,
+    player: context.player,
+    turn: if context.turn == 1 { -1 } else { 1 },
+    path: next_path
+  };
+
   if context.depth == context.max_depth {
     moves.iter().fold(vec![], |mut scored_moves, move_info| {
       if move_info.valid {
         let m = move_info;
-        scored_moves.push(scored_move::get_scored_move(move_info, &board, &context));
+        scored_moves.push(scored_move::get_scored_move(move_info, &board, &next_context));
       }
       scored_moves
     })
   } else {
-    let next_context = Context {
-      depth: context.depth + 1,
-      max_depth: context.max_depth,
-      player: context.player,
-      turn: if context.turn == 1 { -1 } else { 1 }
-    };
     moves.iter().fold(vec![], |mut scored_moves, move_info| {
       if move_info.valid {// && move_info.to_cell[0] == 4 && move_info.to_cell[1] == 0 {
         let mut next_board = Board::new(make_move(&board.cells, move_info));
         let next_moves = get_moves(&next_board, &next_context);
         next_board.topology = scored_move::get_board_topology(&next_moves);
-        let best_move = get_best_move(&next_board, &next_moves, next_context);
-        scored_moves.push(scored_move::make_scored_move(move_info, best_move.eval));
+        let best_move = get_best_move_recurse(&next_board, &next_moves, &next_context, move_info);
+        scored_moves.push(scored_move::make_scored_move(move_info, &best_move));
       }
       scored_moves
     })
   }
 }
 
-fn make_move(cells: &Vec<Vec<i32>>, m: &Move) -> Vec<Vec<i32>> {
+pub fn make_move(cells: &Vec<Vec<i32>>, m: &Move) -> Vec<Vec<i32>> {
   let mut new_cells = cells.clone();
   new_cells[m.to_cell[0]][m.to_cell[1]] = new_cells[m.from_cell[0]][m.from_cell[1]];
   new_cells[m.from_cell[0]][m.from_cell[1]] = 0;
