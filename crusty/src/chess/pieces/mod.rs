@@ -6,3 +6,4 @@ pub mod queen;
 pub mod king;
 pub mod linear_moves;
 pub mod comp;
+pub mod test_helper;

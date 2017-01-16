@@ -35,3 +35,59 @@ fn get_move(board: &chess::Board, piece_value: i32, piece_turn: bool, from_cell:
     capture_value: if capture { (board.cells[i][j]).abs() } else { 0 }
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use ::chess;
+  use ::fen_parser;
+  use super::get_moves;
+  use super::super::test_helper;
+
+  #[test]
+  fn it_moves_all_hoppy() {
+    let board = fen_parser::board_from_fen("8/8/8/3N4/8/8/8/8 w - - 0 1".to_owned());
+    let moves = get_moves(&board, 2, true, [3,3]);
+    test_helper::assert_moves(vec!(
+      chess::Move::new_default([3,3],[1,2], 2, true),
+      chess::Move::new_default([3,3],[1,4], 2, true),
+      chess::Move::new_default([3,3],[2,1], 2, true),
+      chess::Move::new_default([3,3],[2,5], 2, true),
+      chess::Move::new_default([3,3],[4,1], 2, true),
+      chess::Move::new_default([3,3],[4,5], 2, true),
+      chess::Move::new_default([3,3],[5,2], 2, true),
+      chess::Move::new_default([3,3],[5,4], 2, true)
+    ), &moves);
+  }
+
+  #[test]
+  fn it_cannot_capture_its_own_pieces() {
+    let board = fen_parser::board_from_fen("8/2Q1P3/1R3P2/3N4/1B3P2/2N1P3/8/8 w - - 0 1".to_owned());
+    let moves = get_moves(&board, 2, true, [3,3]);
+    test_helper::assert_moves(vec!(
+      chess::Move::new([3,3],[1,2], 2, false, false, 0, 0),
+      chess::Move::new([3,3],[1,4], 2, false, false, 0, 0),
+      chess::Move::new([3,3],[2,1], 2, false, false, 0, 0),
+      chess::Move::new([3,3],[2,5], 2, false, false, 0, 0),
+      chess::Move::new([3,3],[4,1], 2, false, false, 0, 0),
+      chess::Move::new([3,3],[4,5], 2, false, false, 0, 0),
+      chess::Move::new([3,3],[5,2], 2, false, false, 0, 0),
+      chess::Move::new([3,3],[5,4], 2, false, false, 0, 0)
+    ), &moves);
+  }
+
+  #[test]
+  fn it_captures_other_pieces() {
+    let board = fen_parser::board_from_fen("8/2q1p3/1r3p2/3N4/1b3p2/2n1p3/8/8 w - - 0 1".to_owned());
+    let moves = get_moves(&board, 2, true, [3,3]);
+    test_helper::assert_moves(vec!(
+      chess::Move::new([3,3],[1,2], 2, true, true, 5, 3),
+      chess::Move::new([3,3],[1,4], 2, true, true, 1, -1),
+      chess::Move::new([3,3],[2,1], 2, true, true, 4, 2),
+      chess::Move::new([3,3],[2,5], 2, true, true, 1, -1),
+      chess::Move::new([3,3],[4,1], 2, true, true, 3, 1),
+      chess::Move::new([3,3],[4,5], 2, true, true, 1, -1),
+      chess::Move::new([3,3],[5,2], 2, true, true, 2, 0),
+      chess::Move::new([3,3],[5,4], 2, true, true, 1, -1)
+    ), &moves);
+  }
+}

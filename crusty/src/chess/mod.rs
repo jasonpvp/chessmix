@@ -44,7 +44,7 @@ impl Clone for Context {
   }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Move {
   pub from_cell: [usize; 2],
   pub to_cell: [usize; 2],
@@ -53,6 +53,31 @@ pub struct Move {
   pub capture: bool,
   pub capture_value: i32,
   pub capture_diff: i32
+}
+
+impl Move {
+  pub fn new(from_cell: [usize; 2], to_cell: [usize; 2], piece_value: i32, valid: bool, capture: bool, capture_value: i32, capture_diff: i32) -> Move {
+    Move {
+      from_cell: from_cell,
+      to_cell: to_cell,
+      piece_value: piece_value,
+      valid: valid,
+      capture: capture,
+      capture_value: capture_value,
+      capture_diff: capture_diff
+    }
+  }
+  pub fn new_default(from_cell: [usize; 2], to_cell: [usize; 2], piece_value: i32, valid: bool) -> Move {
+    Move {
+      from_cell: from_cell,
+      to_cell: to_cell,
+      piece_value: piece_value,
+      valid: valid,
+      capture: false,
+      capture_value: 0,
+      capture_diff: 0
+    }
+  }
 }
 
 pub fn board_to_ascii(board: &Board) -> String {
