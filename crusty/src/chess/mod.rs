@@ -103,7 +103,9 @@ pub fn get_best_move(board: &Board, moves: &Vec<Move>, context: &Context) -> sco
 
 fn get_best_move_recurse(board: &Board, moves: &Vec<Move>, context: &Context, prev_move: &Move) -> scored_move::ScoredMove {
   if moves.len() == 0 {
-    scored_move::get_scored_move(prev_move, &board, &context)
+    let mut best_move = scored_move::get_scored_move(prev_move, &board, &context);
+    best_move.eval.in_checkmate = (context.turn == context.player && best_move.eval.player_in_check) || (context.turn != context.player && best_move.eval.opponent_in_check);
+    best_move
   } else {
     let mut scored_moves = get_scored_moves(board, moves, &context, prev_move);
     let sorter = if context.player == context.turn { sort_descending } else { sort_ascending };
@@ -113,7 +115,15 @@ fn get_best_move_recurse(board: &Board, moves: &Vec<Move>, context: &Context, pr
         println!("{}", scored_move::serialize(m.clone()).to_string());
       }
     }
-    scored_moves[0].clone()
+    let in_checkmate = scored_moves.iter().fold(true, |mut checkmate, sm| {
+      checkmate && ((context.turn == context.player && sm.eval.player_in_check) || (context.turn != context.player && sm.eval.opponent_in_check))
+    });
+    let mut best_move = scored_moves[0].clone();
+    best_move.eval.in_checkmate = in_checkmate;
+    if in_checkmate {
+      println!("{} in checkmate for {}", context.turn, scored_move::serialize(best_move.clone()));
+    }
+    best_move
   }
 }
 
