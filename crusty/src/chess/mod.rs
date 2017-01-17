@@ -1,6 +1,8 @@
 mod pieces;
-use std;
+pub mod constants;
 pub mod scored_move;
+
+use std;
 use std::time::{Duration, Instant};
 extern crate time;
 
@@ -109,12 +111,6 @@ pub fn get_moves(board: &Board, context: &Context) -> Vec<Move> {
     j = 0;
   }
   moves.sort_by(sort_by_capture_descending);
-//  if context.depth == 2 && board.cells[3][7] == 5 {
-//    for m in moves.iter() {
-//      println!("capture value: {} move piece: {}, move ({},{})-({},{}) valid: {}", m.capture_value, m.piece_value, m.from_cell[0], m.from_cell[1], m.to_cell[0], m.to_cell[1], m.valid);
-//    }
-//  }
-
   moves
 }
 

@@ -43,7 +43,7 @@ var callback = ffi.Callback('void', ['string'], function (scoredMoveJson) {
 // starting board
 // var fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 // test checkmate
-// var fen = 'rnbqkbnr/1ppppppp/8/8/p1B5/4PQ2/PPPP1PPP/RNB1K1NR w KQkq - 0 1'
+ var fen = 'rnbqkbnr/1ppppppp/8/8/p1B5/4PQ2/PPPP1PPP/RNB1K1NR w KQkq - 0 1'
 // avoid bad trade
 // var fen = 'rn1qkbnr/ppp1ppp1/3p4/7p/6b1/P1P1P3/1P1P1PPP/RNBQKBNR w KQkq - 0 1'
 // opponent challenges pieces
@@ -51,7 +51,7 @@ var callback = ffi.Callback('void', ['string'], function (scoredMoveJson) {
 // opponent takes piece
 //var fen = 'rnbqkbnr/ppp1pppp/8/3p4/2N1N3/8/PPPPPPPP/R1BQKB1R w KQkq - 0 1'
 // sacrifice queen for checkmate in 2
- var fen = 'rnbqkb1r/pppppppp/7n/8/2B1PQ2/5R2/PPPP1PPP/RNB1K1N1 w KQkq - 0 1'
+// var fen = 'rnbqkb1r/pppppppp/7n/8/2B1PQ2/5R2/PPPP1PPP/RNB1K1N1 w KQkq - 0 1'
 // avoid bad capture (requires check awareness and 4-move look ahead)
 //var fen = 'rnbqk1nr/pppp1pp1/4pb2/7p/8/1PNPP3/P1P2PPP/R1BQKBNR w KQkq - 0 1'
 // avoid bad capture (requires only 2 move look ahead)

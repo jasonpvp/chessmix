@@ -1,5 +1,6 @@
 use rustc_serialize::json::{self};
 use ::chess;
+mod topology;
 
 #[derive(Clone)]
 pub struct ScoredMove {
@@ -82,8 +83,9 @@ fn path_str(path: Vec<[[usize; 2]; 2]>) -> String {
 }
 
 pub fn get_scored_move(move_info: &chess::Move, board: &chess::Board, context: &chess::Context) -> ScoredMove {
-//  let score = piece_score(&board.cells, context) + get_topology_score(board, context);
-  let (score, player_in_check, opponent_in_check) = get_topology_score(board, context);
+  let (mut score, player_in_check, opponent_in_check) = topology::get_topology_score(board, context);
+  score += piece_score(&board.cells, context);
+
   let mut path = context.path.to_owned();
   path.push([move_info.from_cell, move_info.to_cell]);
   let ps = path_str(path.clone());
@@ -107,7 +109,7 @@ fn piece_score (cells: &Vec<Vec<i32>>, context: &chess::Context) -> f32 {
   let mut ttl = 0 as i32;
   for row in cells_slice.iter() {
     for cell in row.iter() {
-      ttl += piece_weight(*cell, context.depth);
+      ttl += chess::constants::piece_weight(*cell, context.depth);
     }
   }
   ttl as f32
@@ -129,51 +131,4 @@ pub fn get_board_topology(moves: &Vec<chess::Move>) -> BoardTopology {
   BoardTopology {
     cells: topo_cells
   }
-}
-
-fn piece_weight(piece_value: i32, depth: i32) -> i32 {
-  match piece_value {
-    -1 => -1,
-    -2 => -2,
-    -3 => -3,
-    -4 => -4,
-    -5 => -10,
-    -6 => -10000000 / depth,
-    1 => 1,
-    2 => 2,
-    3 => 3,
-    4 => 4,
-    5 => 10,
-    6 => 10000000 / depth,
-    0 => 0,
-    _ => 0
-  }
-}
-
-fn get_topology_score(board: &chess::Board, context: &chess::Context) -> (f32, bool, bool) {
-  let mut score = 0.0;
-  let mut player_in_check = true;
-  let mut opponent_in_check = true;
-  // This is a crappy proxy for a more complicated calculation
-  for (i, row) in board.topology.cells.iter().enumerate() {
-    for (j, cell) in row.iter().enumerate() {
-      let piece_value = board.cells[i][j];
-      if piece_value != 0 {
-        let mut piece_at_risk = false;
-        let cover_value = cell.iter().fold(0, |sum, val| {
-          piece_at_risk = piece_at_risk || chess::pieces::comp::opposing_pieces(piece_value, *val);
-          sum + piece_weight(*val, 1)
-        });
-        score += (piece_weight(piece_value, 1) + cover_value) as f32;
-        let player_king = piece_value * context.player == 6;
-        let opponent_king = piece_value * context.player == -6;
-        if player_king {
-          player_in_check = player_in_check && piece_at_risk;
-        } else if opponent_king {
-          opponent_in_check = opponent_in_check && piece_at_risk;
-        }
-      }
-    }
-  }
-  (score * context.player as f32, player_in_check, opponent_in_check)
 }
