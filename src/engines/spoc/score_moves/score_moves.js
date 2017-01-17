@@ -43,7 +43,7 @@ var callback = ffi.Callback('void', ['string'], function (scoredMoveJson) {
 // starting board
 // var fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 // test checkmate
- var fen = 'rnbqkbnr/1ppppppp/8/8/p1B5/4PQ2/PPPP1PPP/RNB1K1NR w KQkq - 0 1'
+ var fen = 'rnbqkbnr/1ppppppp/8/p7/2B5/1P2PQ2/P1PP1PPP/RNB1K1NR w KQkq - 0 1'
 // avoid bad trade
 // var fen = 'rn1qkbnr/ppp1ppp1/3p4/7p/6b1/P1P1P3/1P1P1PPP/RNBQKBNR w KQkq - 0 1'
 // opponent challenges pieces

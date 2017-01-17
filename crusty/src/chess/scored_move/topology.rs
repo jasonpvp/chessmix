@@ -12,13 +12,16 @@ pub fn get_topology_score(board: &chess::Board, context: &chess::Context) -> (f3
       let min_len = if player_covers.len() < other_covers.len() { player_covers.len() } else { other_covers.len() };
 
       if piece_value != 0 {
+        let is_player_piece = chess::pieces::comp::same_color(piece_value, context.player);
 //        println!("\n{},{} piece_value: {}", i, j, piece_value);
 //        let pcs = player_covers.iter().fold("".to_owned(), |s, v| { format!("{}, {}", s, v)});
 //        let ocs = other_covers.iter().fold("".to_owned(), |s, v| { format!("{}, {}", s, v)});
 //        println!("piece covers: {}\nother covers: {}", pcs, ocs);
-        let mut piece_at_risk = other_covers.len() > 0;
+        let piece_at_risk = if is_player_piece { other_covers.len() > 0 } else { player_covers.len() > 0 };
         if piece_at_risk {
-          if chess::pieces::comp::same_color(piece_value, context.player) {
+println!("!!!!risk");
+
+          if is_player_piece {
             let s = trade_score(&other_covers, &player_covers, piece_value) as f32 * -1.0;
 //            println!("add {}", s);
             score += s;
@@ -43,6 +46,7 @@ pub fn get_topology_score(board: &chess::Board, context: &chess::Context) -> (f3
 }
 
 pub fn trade_score(first_pieces: &Vec<i32>, second_pieces: &Vec<i32>, mut prev_piece: i32) -> i32 {
+println!("!!!!");
   let min_len = if first_pieces.len() < second_pieces.len() { first_pieces.len() } else { second_pieces.len() };
   let mut score = 0;
   if min_len > 0 {
